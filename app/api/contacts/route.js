@@ -27,13 +27,26 @@ export async function GET(request) {
     }
 
     try {
+      console.log('Calling NGP VAN API...');
       const response = await ngpvan.getPeople({
         firstName,
         lastName,
         $expand: "Phones"
       });
 
-      console.log('API Response:', JSON.stringify(response, null, 2));
+      console.log('API Response received:', {
+        hasData: !!response,
+        responseType: typeof response,
+        isArray: Array.isArray(response),
+        keys: response ? Object.keys(response) : null
+      });
+
+      if (!response) {
+        console.log('No response data received');
+        return NextResponse.json({ message: "No data found" });
+      }
+
+      console.log('Full API Response:', JSON.stringify(response, null, 2));
       return NextResponse.json(response);
     } catch (apiError) {
       console.error("NGP VAN API Error:", {
