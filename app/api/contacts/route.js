@@ -27,13 +27,14 @@ export async function GET(request) {
     }
 
     try {
-      const { data } = await ngpvan.getPeople({
+      const response = await ngpvan.getPeople({
         firstName,
         lastName,
         $expand: "Phones"
       });
 
-      return NextResponse.json(data);
+      console.log('API Response:', JSON.stringify(response, null, 2));
+      return NextResponse.json(response);
     } catch (apiError) {
       console.error("NGP VAN API Error:", {
         message: apiError.message,
