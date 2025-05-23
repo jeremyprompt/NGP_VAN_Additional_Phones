@@ -9,6 +9,7 @@ export default function Home() {
   const [contacts, setContacts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [customerIds, setCustomerIds] = useState([]);
 
   const fetchLists = async () => {
     setLoading(true);
@@ -34,6 +35,7 @@ export default function Home() {
     setLoading(true);
     setError(null);
     setContacts([]);
+    setCustomerIds([]);
     try {
       const url = `/api/contacts?listId=${listId}`;
       console.log('Making request to:', url);
@@ -45,7 +47,12 @@ export default function Home() {
       }
       const data = await response.json();
       console.log('Received contacts data:', data);
-      setContacts(data.contacts || []);
+      
+      const contactsData = data.contacts || [];
+      const ids = contactsData.map(contact => contact.customer.id);
+      
+      setContacts(contactsData);
+      setCustomerIds(ids);
       setSelectedList(listId);
     } catch (err) {
       setError(err.message);
@@ -103,20 +110,14 @@ export default function Home() {
             <h2 className="text-2xl font-bold mb-4">Contacts in Selected List</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {contacts.map((contact) => (
-                <div key={contact.id} className="p-6 border rounded-lg shadow-md bg-white hover:shadow-lg transition-shadow duration-200">
+                <div key={contact.customer.id} className="p-6 border rounded-lg shadow-md bg-white hover:shadow-lg transition-shadow duration-200">
                   <h3 className="text-lg font-semibold mb-2">
-                    {contact.firstName} {contact.lastName}
+                    {contact.customer.displayName}
                   </h3>
                   <div className="text-sm text-gray-600 space-y-2">
-                    {contact.email && <p>Email: {contact.email}</p>}
-                    {contact.phone && <p>Phone: {contact.phone}</p>}
-                    {contact.address && (
-                      <div>
-                        <p>Address:</p>
-                        <p className="pl-2">{contact.address.street}</p>
-                        <p className="pl-2">{contact.address.city}, {contact.address.state} {contact.address.zip}</p>
-                      </div>
-                    )}
+                    {contact.customer.channels.map((channel, index) => (
+                      <p key={index}>Phone: {channel.key}</p>
+                    ))}
                   </div>
                 </div>
               ))}
