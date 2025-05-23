@@ -5,6 +5,8 @@ import ContactDisplay from '@/components/ContactDisplay';
 
 export default function Home() {
   const [lists, setLists] = useState([]);
+  const [selectedList, setSelectedList] = useState(null);
+  const [contacts, setContacts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -21,6 +23,26 @@ export default function Home() {
     } catch (err) {
       setError(err.message);
       console.error('Error fetching lists:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchContacts = async (listId) => {
+    setLoading(true);
+    setError(null);
+    setContacts([]);
+    try {
+      const response = await fetch(`/api/contacts?listId=${listId}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch contacts');
+      }
+      const data = await response.json();
+      setContacts(data.contacts || []);
+      setSelectedList(listId);
+    } catch (err) {
+      setError(err.message);
+      console.error('Error fetching contacts:', err);
     } finally {
       setLoading(false);
     }
@@ -54,12 +76,45 @@ export default function Home() {
                   <p>Type: {list.type}</p>
                   <p>Created: {new Date(list.createdAt).toLocaleDateString()}</p>
                   <p>Contacts: {list.contactCount || 0}</p>
+                  <button
+                    onClick={() => fetchContacts(list.id)}
+                    disabled={loading}
+                    className="mt-4 w-full px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:bg-green-300"
+                  >
+                    {loading && selectedList === list.id ? 'Loading Contacts...' : 'Display Contacts'}
+                  </button>
                 </div>
               </div>
             ))}
           </div>
         ) : !loading && !error && (
           <p className="text-gray-500">Click the button above to load contact lists</p>
+        )}
+
+        {contacts.length > 0 && (
+          <div className="mt-8">
+            <h2 className="text-2xl font-bold mb-4">Contacts in Selected List</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {contacts.map((contact) => (
+                <div key={contact.id} className="p-6 border rounded-lg shadow-md bg-white hover:shadow-lg transition-shadow duration-200">
+                  <h3 className="text-lg font-semibold mb-2">
+                    {contact.firstName} {contact.lastName}
+                  </h3>
+                  <div className="text-sm text-gray-600 space-y-2">
+                    {contact.email && <p>Email: {contact.email}</p>}
+                    {contact.phone && <p>Phone: {contact.phone}</p>}
+                    {contact.address && (
+                      <div>
+                        <p>Address:</p>
+                        <p className="pl-2">{contact.address.street}</p>
+                        <p className="pl-2">{contact.address.city}, {contact.address.state} {contact.address.zip}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         )}
       </div>
     </main>
