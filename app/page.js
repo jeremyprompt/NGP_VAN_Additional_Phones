@@ -7,9 +7,9 @@ export default function Home() {
   const [lists, setLists] = useState([]);
   const [selectedList, setSelectedList] = useState(null);
   const [contacts, setContacts] = useState([]);
+  const [customerDetails, setCustomerDetails] = useState({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [customerIds, setCustomerIds] = useState([]);
 
   const fetchLists = async () => {
     setLoading(true);
@@ -35,7 +35,7 @@ export default function Home() {
     setLoading(true);
     setError(null);
     setContacts([]);
-    setCustomerIds([]);
+    setCustomerDetails({});
     try {
       const url = `/api/contacts?listId=${listId}`;
       console.log('Making request to:', url);
@@ -49,11 +49,27 @@ export default function Home() {
       console.log('Received contacts data:', data);
       
       const contactsData = data.contacts || [];
-      const ids = contactsData.map(contact => contact.customer.id);
-      
       setContacts(contactsData);
-      setCustomerIds(ids);
       setSelectedList(listId);
+
+      // Fetch details for each contact
+      for (const contact of contactsData) {
+        const customerId = contact.customer.id;
+        try {
+          const detailsResponse = await fetch(`/api/customer/${customerId}`);
+          if (!detailsResponse.ok) {
+            console.error(`Failed to fetch details for customer ${customerId}`);
+            continue;
+          }
+          const details = await detailsResponse.json();
+          setCustomerDetails(prev => ({
+            ...prev,
+            [customerId]: details
+          }));
+        } catch (err) {
+          console.error(`Error fetching details for customer ${customerId}:`, err);
+        }
+      }
     } catch (err) {
       setError(err.message);
       console.error('Error fetching contacts:', err);
@@ -65,7 +81,7 @@ export default function Home() {
   return (
     <main className="min-h-screen p-8">
       <div className="max-w-6xl mx-auto">
-        <h1 className="text-3xl font-bold mb-8">NGP VAN Contact Lists</h1>
+        <h1 className="text-3xl font-bold mb-8 text-black">NGP VAN Contact Lists</h1>
         
         <button
           onClick={fetchLists}
@@ -109,18 +125,30 @@ export default function Home() {
           <div className="mt-8">
             <h2 className="text-2xl font-bold mb-4 text-black">Contacts in Selected List</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {contacts.map((contact) => (
-                <div key={contact.customer.id} className="p-6 border rounded-lg shadow-md bg-white hover:shadow-lg transition-shadow duration-200">
-                  <h3 className="text-lg font-semibold mb-2 text-black">
-                    {contact.customer.displayName}
-                  </h3>
-                  <div className="text-sm text-gray-600 space-y-2">
-                    {contact.customer.channels.map((channel, index) => (
-                      <p key={index}>Phone: {channel.key}</p>
-                    ))}
+              {contacts.map((contact) => {
+                const customerId = contact.customer.id;
+                const details = customerDetails[customerId];
+                return (
+                  <div key={customerId} className="p-6 border rounded-lg shadow-md bg-white hover:shadow-lg transition-shadow duration-200">
+                    <h3 className="text-lg font-semibold mb-2 text-black">
+                      {contact.customer.displayName}
+                    </h3>
+                    <div className="text-sm text-gray-600 space-y-2">
+                      {contact.customer.channels.map((channel, index) => (
+                        <p key={index}>Phone: {channel.key}</p>
+                      ))}
+                      {details && (
+                        <div className="mt-4 p-4 bg-gray-50 rounded">
+                          <h4 className="font-semibold mb-2 text-black">Customer Details:</h4>
+                          <pre className="text-xs overflow-auto">
+                            {JSON.stringify(details, null, 2)}
+                          </pre>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}
