@@ -1,4 +1,4 @@
-import ngpvan from '@api/ngpvan';
+import ngpvan from '@/lib/ngpvan';
 
 export const dynamic = "force-dynamic";
 
