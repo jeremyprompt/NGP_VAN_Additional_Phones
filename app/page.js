@@ -29,15 +29,21 @@ export default function Home() {
   };
 
   const fetchContacts = async (listId) => {
+    console.log('Fetching contacts for listId:', listId);
     setLoading(true);
     setError(null);
     setContacts([]);
     try {
-      const response = await fetch(`/api/contacts?listId=${listId}`);
+      const url = `/api/contacts?listId=${listId}`;
+      console.log('Making request to:', url);
+      const response = await fetch(url);
       if (!response.ok) {
-        throw new Error('Failed to fetch contacts');
+        const errorData = await response.json();
+        console.error('Error response:', errorData);
+        throw new Error(errorData.error || 'Failed to fetch contacts');
       }
       const data = await response.json();
+      console.log('Received contacts data:', data);
       setContacts(data.contacts || []);
       setSelectedList(listId);
     } catch (err) {

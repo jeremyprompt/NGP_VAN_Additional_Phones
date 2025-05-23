@@ -15,6 +15,9 @@ export async function GET(request) {
 
     const { searchParams } = new URL(request.url);
     const listId = searchParams.get('listId');
+    console.log('Request URL:', request.url);
+    console.log('Search params:', Object.fromEntries(searchParams.entries()));
+    console.log('ListId from params:', listId);
 
     const client = new PromptIoClient();
     console.log('Created Prompt.io client');
@@ -22,6 +25,7 @@ export async function GET(request) {
     if (listId) {
       console.log(`Fetching contacts for list ${listId}`);
       const contacts = await client.getAllContactsFromList(listId);
+      console.log(`Retrieved ${contacts.length} contacts for list ${listId}`);
       return Response.json({ contacts });
     } else {
       console.log('Fetching contact lists');
