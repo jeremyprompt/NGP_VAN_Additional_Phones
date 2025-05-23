@@ -8,6 +8,7 @@ export default function Home() {
   const [selectedList, setSelectedList] = useState(null);
   const [contacts, setContacts] = useState([]);
   const [customerDetails, setCustomerDetails] = useState({});
+  const [ngpVanDetails, setNgpVanDetails] = useState({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -36,6 +37,7 @@ export default function Home() {
     setError(null);
     setContacts([]);
     setCustomerDetails({});
+    setNgpVanDetails({});
     try {
       const url = `/api/contacts?listId=${listId}`;
       console.log('Making request to:', url);
@@ -56,6 +58,7 @@ export default function Home() {
       for (const contact of contactsData) {
         const customerId = contact.customer.id;
         try {
+          // Fetch Prompt.io details
           const detailsResponse = await fetch(`/api/customer/${customerId}`);
           if (!detailsResponse.ok) {
             console.error(`Failed to fetch details for customer ${customerId}`);
@@ -66,6 +69,24 @@ export default function Home() {
             ...prev,
             [customerId]: details
           }));
+
+          // Fetch NGP VAN details if vanId exists
+          if (details.vanId) {
+            try {
+              const ngpVanResponse = await fetch(`/api/ngpvan/${details.vanId}`);
+              if (!ngpVanResponse.ok) {
+                console.error(`Failed to fetch NGP VAN details for vanId ${details.vanId}`);
+                continue;
+              }
+              const ngpVanData = await ngpVanResponse.json();
+              setNgpVanDetails(prev => ({
+                ...prev,
+                [customerId]: ngpVanData
+              }));
+            } catch (err) {
+              console.error(`Error fetching NGP VAN details for vanId ${details.vanId}:`, err);
+            }
+          }
         } catch (err) {
           console.error(`Error fetching details for customer ${customerId}:`, err);
         }
@@ -126,6 +147,7 @@ export default function Home() {
               {contacts.map((contact) => {
                 const customerId = contact.customer.id;
                 const details = customerDetails[customerId];
+                const ngpVanData = ngpVanDetails[customerId];
                 return (
                   <div key={customerId} className="p-6 border rounded-lg shadow-md bg-white hover:shadow-lg transition-shadow duration-200">
                     <h3 className="text-lg font-semibold mb-2 text-black">
@@ -140,6 +162,14 @@ export default function Home() {
                           <h4 className="font-semibold mb-2 text-black">Customer Details:</h4>
                           <pre className="text-xs overflow-auto">
                             {JSON.stringify(details, null, 2)}
+                          </pre>
+                        </div>
+                      )}
+                      {ngpVanData && (
+                        <div className="mt-4 p-4 bg-blue-50 rounded">
+                          <h4 className="font-semibold mb-2 text-black">NGP VAN Details:</h4>
+                          <pre className="text-xs overflow-auto">
+                            {JSON.stringify(ngpVanData, null, 2)}
                           </pre>
                         </div>
                       )}
