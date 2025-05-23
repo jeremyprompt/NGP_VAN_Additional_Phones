@@ -53,49 +53,47 @@ export default function Home() {
       const contactsData = data.contacts || [];
       setContacts(contactsData);
       setSelectedList(listId);
-
-      // Fetch details for each contact
-      for (const contact of contactsData) {
-        const customerId = contact.customer.id;
-        try {
-          // Fetch Prompt.io details
-          const detailsResponse = await fetch(`/api/customer/${customerId}`);
-          if (!detailsResponse.ok) {
-            console.error(`Failed to fetch details for customer ${customerId}`);
-            continue;
-          }
-          const details = await detailsResponse.json();
-          setCustomerDetails(prev => ({
-            ...prev,
-            [customerId]: details
-          }));
-
-          // Fetch NGP VAN details if vanId exists
-          if (details.vanId) {
-            try {
-              const ngpVanResponse = await fetch(`/api/ngpvan/${details.vanId}`);
-              if (!ngpVanResponse.ok) {
-                console.error(`Failed to fetch NGP VAN details for vanId ${details.vanId}`);
-                continue;
-              }
-              const ngpVanData = await ngpVanResponse.json();
-              setNgpVanDetails(prev => ({
-                ...prev,
-                [customerId]: ngpVanData
-              }));
-            } catch (err) {
-              console.error(`Error fetching NGP VAN details for vanId ${details.vanId}:`, err);
-            }
-          }
-        } catch (err) {
-          console.error(`Error fetching details for customer ${customerId}:`, err);
-        }
-      }
     } catch (err) {
       setError(err.message);
       console.error('Error fetching contacts:', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchContactDetails = async (customerId) => {
+    try {
+      // Fetch Prompt.io details
+      const detailsResponse = await fetch(`/api/customer/${customerId}`);
+      if (!detailsResponse.ok) {
+        console.error(`Failed to fetch details for customer ${customerId}`);
+        return;
+      }
+      const details = await detailsResponse.json();
+      setCustomerDetails(prev => ({
+        ...prev,
+        [customerId]: details
+      }));
+
+      // Fetch NGP VAN details if vanId exists
+      if (details.vanId) {
+        try {
+          const ngpVanResponse = await fetch(`/api/ngpvan/${details.vanId}`);
+          if (!ngpVanResponse.ok) {
+            console.error(`Failed to fetch NGP VAN details for vanId ${details.vanId}`);
+            return;
+          }
+          const ngpVanData = await ngpVanResponse.json();
+          setNgpVanDetails(prev => ({
+            ...prev,
+            [customerId]: ngpVanData
+          }));
+        } catch (err) {
+          console.error(`Error fetching NGP VAN details for vanId ${details.vanId}:`, err);
+        }
+      }
+    } catch (err) {
+      console.error(`Error fetching details for customer ${customerId}:`, err);
     }
   };
 
@@ -157,6 +155,14 @@ export default function Home() {
                       {contact.customer.channels.map((channel, index) => (
                         <p key={index}>Phone: {channel.key}</p>
                       ))}
+                      {!details && (
+                        <button
+                          onClick={() => fetchContactDetails(customerId)}
+                          className="mt-2 px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700"
+                        >
+                          Load Details
+                        </button>
+                      )}
                       {details && (
                         <div className="mt-4 p-4 bg-gray-50 rounded">
                           <h4 className="font-semibold mb-2 text-black">Customer Details:</h4>
