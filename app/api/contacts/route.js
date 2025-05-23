@@ -1,71 +1,22 @@
-import { NextResponse } from "next/server";
-import { ngpvan } from "@/lib/ngpvan";
+import PromptIoClient from '@/lib/promptio';
 
 export const dynamic = "force-dynamic";
 
 export async function GET(request) {
   try {
-    // Log environment variables (without sensitive data)
-    console.log('Environment check:', {
-      hasUsername: !!process.env.NGP_VAN_USERNAME,
-      hasPassword: !!process.env.NGP_VAN_PASSWORD,
-      nodeEnv: process.env.NODE_ENV
-    });
-
-    if (process.env.NODE_ENV === "production" && (!process.env.NGP_VAN_USERNAME || !process.env.NGP_VAN_PASSWORD)) {
-      return NextResponse.json({ error: "NGP VAN credentials are not configured" }, { status: 500 });
+    if (!process.env.PROMPT_IO_AUTH_TOKEN) {
+      throw new Error('PROMPT_IO_AUTH_TOKEN is not configured');
     }
 
-    const { searchParams } = new URL(request.url);
-    const firstName = searchParams.get('firstName');
-    const lastName = searchParams.get('lastName');
+    const client = new PromptIoClient();
+    const lists = await client.getContactLists();
 
-    console.log('Search params:', { firstName, lastName });
-
-    if (!firstName || !lastName) {
-      return NextResponse.json({ error: "First name and last name are required" }, { status: 400 });
-    }
-
-    try {
-      console.log('Calling NGP VAN API...');
-      const response = await ngpvan.getPeople({
-        firstName,
-        lastName,
-        $expand: "Phones"
-      });
-
-      console.log('API Response received:', {
-        hasData: !!response,
-        responseType: typeof response,
-        isArray: Array.isArray(response),
-        keys: response ? Object.keys(response) : null
-      });
-
-      if (!response) {
-        console.log('No response data received');
-        return NextResponse.json({ message: "No data found" });
-      }
-
-      console.log('Full API Response:', JSON.stringify(response, null, 2));
-      return NextResponse.json(response);
-    } catch (apiError) {
-      console.error("NGP VAN API Error:", {
-        message: apiError.message,
-        stack: apiError.stack
-      });
-      return NextResponse.json({ 
-        error: "Failed to fetch contact information",
-        details: apiError.message 
-      }, { status: 500 });
-    }
+    return Response.json({ lists });
   } catch (error) {
-    console.error("General API Error:", {
-      message: error.message,
-      stack: error.stack
-    });
-    return NextResponse.json({ 
-      error: "Failed to process request",
-      details: error.message 
-    }, { status: 500 });
+    console.error('Error in contacts API route:', error);
+    return Response.json(
+      { error: error.message || 'Failed to fetch contact lists' },
+      { status: 500 }
+    );
   }
 }

@@ -1,117 +1,66 @@
 'use client';
 
 import { useState } from 'react';
-import ContactDisplay from '../components/ContactDisplay';
+import ContactDisplay from '@/components/ContactDisplay';
 
 export default function Home() {
-  const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    state: ''
-  });
-  const [contact, setContact] = useState(null);
-  const [error, setError] = useState(null);
+  const [lists, setLists] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const fetchLists = async () => {
     setLoading(true);
     setError(null);
-    setContact(null);
-
     try {
-      const response = await fetch(`/api/contacts?firstName=${encodeURIComponent(formData.firstName)}&lastName=${encodeURIComponent(formData.lastName)}`);
-      const data = await response.json();
-
+      const response = await fetch('/api/contacts');
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to fetch contact information');
+        throw new Error('Failed to fetch contact lists');
       }
-
-      setContact(data);
+      const data = await response.json();
+      setLists(data.lists || []);
     } catch (err) {
       setError(err.message);
+      console.error('Error fetching lists:', err);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
   return (
     <main className="min-h-screen p-8">
-      <div className="max-w-2xl mx-auto">
-        <h1 className="text-3xl font-bold mb-8">Contact Information</h1>
+      <div className="max-w-6xl mx-auto">
+        <h1 className="text-3xl font-bold mb-8">NGP VAN Contact Lists</h1>
         
-        <form onSubmit={handleSubmit} className="mb-8 space-y-4">
-          <div>
-            <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-1">
-              First Name
-            </label>
-            <input
-              type="text"
-              id="firstName"
-              name="firstName"
-              value={formData.firstName}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              placeholder="Enter first name"
-              required
-            />
-          </div>
-          
-          <div>
-            <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-1">
-              Last Name
-            </label>
-            <input
-              type="text"
-              id="lastName"
-              name="lastName"
-              value={formData.lastName}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              placeholder="Enter last name"
-              required
-            />
-          </div>
-          
-          <div>
-            <label htmlFor="state" className="block text-sm font-medium text-gray-700 mb-1">
-              State
-            </label>
-            <input
-              type="text"
-              id="state"
-              name="state"
-              value={formData.state}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              placeholder="Enter state"
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
-          >
-            {loading ? 'Searching...' : 'Search'}
-          </button>
-        </form>
+        <button
+          onClick={fetchLists}
+          disabled={loading}
+          className="mb-8 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-blue-300"
+        >
+          {loading ? 'Loading...' : 'Load Contact Lists'}
+        </button>
 
         {error && (
-          <div className="p-4 mb-4 text-red-700 bg-red-100 rounded-md">
+          <div className="mb-4 p-4 bg-red-100 text-red-700 rounded">
             {error}
           </div>
         )}
 
-        {contact && <ContactDisplay contact={contact} />}
+        {lists.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {lists.map((list) => (
+              <div key={list.id} className="p-6 border rounded-lg shadow-md bg-white hover:shadow-lg transition-shadow duration-200">
+                <h2 className="text-xl font-semibold mb-2">{list.name}</h2>
+                <div className="text-sm text-gray-600 space-y-2">
+                  <p>Type: {list.type}</p>
+                  <p>Created: {new Date(list.createdAt).toLocaleDateString()}</p>
+                  <p>Contacts: {list.contactCount || 0}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : !loading && !error && (
+          <p className="text-gray-500">Click the button above to load contact lists</p>
+        )}
       </div>
     </main>
   );
