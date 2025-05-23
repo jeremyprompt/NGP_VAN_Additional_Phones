@@ -85,7 +85,7 @@ export default function Home() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {lists.map((list) => (
               <div key={list.id} className="p-6 border rounded-lg shadow-md bg-white hover:shadow-lg transition-shadow duration-200">
-                <h2 className="text-xl font-semibold mb-2">{list.name}</h2>
+                <h2 className="text-xl font-semibold mb-2 text-black">{list.name}</h2>
                 <div className="text-sm text-gray-600 space-y-2">
                   <p>Type: {list.type}</p>
                   <p>Created: {new Date(list.createdAt).toLocaleDateString()}</p>
@@ -107,11 +107,11 @@ export default function Home() {
 
         {contacts.length > 0 && (
           <div className="mt-8">
-            <h2 className="text-2xl font-bold mb-4">Contacts in Selected List</h2>
+            <h2 className="text-2xl font-bold mb-4 text-black">Contacts in Selected List</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {contacts.map((contact) => (
                 <div key={contact.customer.id} className="p-6 border rounded-lg shadow-md bg-white hover:shadow-lg transition-shadow duration-200">
-                  <h3 className="text-lg font-semibold mb-2">
+                  <h3 className="text-lg font-semibold mb-2 text-black">
                     {contact.customer.displayName}
                   </h3>
                   <div className="text-sm text-gray-600 space-y-2">
