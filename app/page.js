@@ -81,7 +81,7 @@ export default function Home() {
   return (
     <main className="min-h-screen p-8">
       <div className="max-w-6xl mx-auto">
-        <h1 className="text-3xl font-bold mb-8 text-black">NGP VAN Contact Lists</h1>
+        <h1 className="text-3xl font-bold mb-8 text-white">NGP VAN Contact Lists</h1>
         
         <button
           onClick={fetchLists}
@@ -104,8 +104,7 @@ export default function Home() {
                 <h2 className="text-xl font-semibold mb-2 text-black">{list.name}</h2>
                 <div className="text-sm text-gray-600 space-y-2">
                   <p>Type: {list.type}</p>
-                  <p>Created: {new Date(list.createdAt).toLocaleDateString()}</p>
-                  <p>Contacts: {list.contactCount || 0}</p>
+                  <p>Description: {list.description}</p>
                   <button
                     onClick={() => fetchContacts(list.id)}
                     disabled={loading}
