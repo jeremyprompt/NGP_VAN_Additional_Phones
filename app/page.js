@@ -104,7 +104,6 @@ export default function Home() {
                 <h2 className="text-xl font-semibold mb-2 text-black">{list.name}</h2>
                 <div className="text-sm text-gray-600 space-y-2">
                   <p>Type: {list.type}</p>
-                  <p>Description: {list.description}</p>
                   <button
                     onClick={() => fetchContacts(list.id)}
                     disabled={loading}
