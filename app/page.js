@@ -19,7 +19,8 @@ export default function Home() {
         throw new Error('Failed to fetch contact lists');
       }
       const data = await response.json();
-      setLists(data.lists || []);
+      console.log('Received lists data:', data);
+      setLists(data.lists?.contactLists || []);
     } catch (err) {
       setError(err.message);
       console.error('Error fetching lists:', err);
