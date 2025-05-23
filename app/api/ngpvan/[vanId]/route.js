@@ -4,19 +4,9 @@ export const dynamic = "force-dynamic";
 
 export async function GET(request, { params }) {
   try {
-    console.log('Environment check:', {
-      hasAuthToken: !!process.env.NGP_VAN_AUTH_TOKEN,
-      nodeEnv: process.env.NODE_ENV
-    });
-
-    if (!process.env.NGP_VAN_AUTH_TOKEN) {
-      throw new Error('NGP_VAN_AUTH_TOKEN is not configured');
-    }
-
     const vanId = params.vanId;
     console.log('Fetching NGP VAN details for ID:', vanId);
 
-    // Auth is handled by environment variables
     const { data } = await ngpvan.peoplevanid1({
       $expand: 'phones',
       vanId: vanId
