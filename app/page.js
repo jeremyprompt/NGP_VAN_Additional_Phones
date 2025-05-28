@@ -46,30 +46,31 @@ export default function Home() {
         throw new Error(errorData.error || 'Failed to fetch contacts');
       }
       
-      const contacts = await response.json();
-      console.log('Received contacts:', contacts);
+      const data = await response.json();
+      console.log('Received contacts data:', data);
+      
+      // Extract the contacts array from the response
+      const contacts = data.contacts || [];
       setContacts(contacts);
 
       // Fetch customer details for each contact
-      if (Array.isArray(contacts)) {
-        for (const contact of contacts) {
-          if (contact.customer?.id) {
-            console.log('Fetching details for customer:', contact.customer.id);
-            try {
-              const detailsResponse = await fetch(`/api/customer/${contact.customer.id}`);
-              if (!detailsResponse.ok) {
-                console.error(`Failed to fetch details for customer ${contact.customer.id}`);
-                continue;
-              }
-              const details = await detailsResponse.json();
-              console.log('Received customer details:', details);
-              setCustomerDetails(prev => ({
-                ...prev,
-                [contact.customer.id]: details
-              }));
-            } catch (error) {
-              console.error('Error fetching customer details:', error);
+      for (const contact of contacts) {
+        if (contact.customer?.id) {
+          console.log('Fetching details for customer:', contact.customer.id);
+          try {
+            const detailsResponse = await fetch(`/api/customer/${contact.customer.id}`);
+            if (!detailsResponse.ok) {
+              console.error(`Failed to fetch details for customer ${contact.customer.id}`);
+              continue;
             }
+            const details = await detailsResponse.json();
+            console.log('Received customer details:', details);
+            setCustomerDetails(prev => ({
+              ...prev,
+              [contact.customer.id]: details
+            }));
+          } catch (error) {
+            console.error('Error fetching customer details:', error);
           }
         }
       }
@@ -164,41 +165,22 @@ export default function Home() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {contacts.map((contact) => {
                 const customerId = contact.customer.id;
-                const details = customerDetails[customerId];
-                const ngpVanData = ngpVanDetails[customerId];
                 return (
                   <div key={customerId} className="p-6 border rounded-lg shadow-md bg-white hover:shadow-lg transition-shadow duration-200">
                     <h3 className="text-lg font-semibold mb-2 text-black">
                       {contact.customer.displayName}
                     </h3>
                     <div className="text-sm text-gray-600 space-y-2">
+                      <p>Created: {new Date(contact.customer.createdDate).toLocaleDateString()}</p>
                       {contact.customer.channels.map((channel, index) => (
                         <p key={index}>Phone: {channel.key}</p>
                       ))}
-                      {!details && (
-                        <button
-                          onClick={() => fetchContactDetails(customerId)}
-                          className="mt-2 px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700"
-                        >
-                          Load Details
-                        </button>
-                      )}
-                      {details && (
-                        <div className="mt-4 p-4 bg-gray-50 rounded">
-                          <h4 className="font-semibold mb-2 text-black">Customer Details:</h4>
-                          <pre className="text-xs overflow-auto">
-                            {JSON.stringify(details, null, 2)}
-                          </pre>
-                        </div>
-                      )}
-                      {ngpVanData && (
-                        <div className="mt-4 p-4 bg-blue-50 rounded">
-                          <h4 className="font-semibold mb-2 text-black">NGP VAN Details:</h4>
-                          <pre className="text-xs overflow-auto">
-                            {JSON.stringify(ngpVanData, null, 2)}
-                          </pre>
-                        </div>
-                      )}
+                      <button
+                        onClick={() => fetchContactDetails(customerId)}
+                        className="mt-2 px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700"
+                      >
+                        Load Details
+                      </button>
                     </div>
                   </div>
                 );
