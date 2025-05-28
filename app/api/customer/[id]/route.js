@@ -4,20 +4,16 @@ export const dynamic = "force-dynamic";
 
 export async function GET(request, { params }) {
   try {
-    console.log('Environment check:', {
-      hasAuthToken: !!process.env.PROMPT_IO_AUTH_TOKEN,
-      nodeEnv: process.env.NODE_ENV
-    });
+    const { id } = params;
+    console.log('Fetching details for customer:', id);
 
     if (!process.env.PROMPT_IO_AUTH_TOKEN) {
       throw new Error('PROMPT_IO_AUTH_TOKEN is not configured');
     }
 
-    const customerId = params.id;
-    console.log('Fetching details for customer:', customerId);
-
     const client = new PromptIoClient();
-    const details = await client.getCustomerDetails(customerId);
+    const details = await client.getCustomerDetails(id);
+    console.log('Retrieved customer details:', details);
     
     return Response.json(details);
   } catch (error) {
