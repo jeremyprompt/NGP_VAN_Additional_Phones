@@ -85,12 +85,7 @@ export default function Home() {
   const fetchContactDetails = async (customerId) => {
     try {
       console.log('Fetching details for customer:', customerId);
-      const response = await fetch(`https://jeremy.prompt.io/rest/1.0/data/customer/${customerId}`, {
-        headers: {
-          'accept': '*/*',
-          'orgAuthToken': 'agedUcuLSy0doGwKbbQaOTFIQ4LctSzp2J'
-        }
-      });
+      const response = await fetch(`/api/customer/${customerId}`);
       
       if (!response.ok) {
         console.error(`Failed to fetch details for customer ${customerId}`);
