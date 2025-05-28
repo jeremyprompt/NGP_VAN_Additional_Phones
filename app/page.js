@@ -32,6 +32,8 @@ export default function Home() {
   };
 
   const fetchContacts = async (listId) => {
+    setLoading(true);
+    setError(null);
     try {
       console.log('Fetching contacts for listId:', listId);
       const url = `/api/contacts${listId ? `?listId=${listId}` : ''}`;
@@ -48,34 +50,25 @@ export default function Home() {
       console.log('Received contacts:', contacts);
       setContacts(contacts);
 
-      // Check each contact for vanId
+      // Fetch customer details for each contact
       if (Array.isArray(contacts)) {
         for (const contact of contacts) {
-          if (contact.customer?.vanId) {
-            console.log('Found vanId:', contact.customer.vanId, 'for contact:', contact.customer.displayName);
+          if (contact.customer?.id) {
+            console.log('Fetching details for customer:', contact.customer.id);
             try {
-              const vanResponse = await fetch(`/api/ngpvan/${contact.customer.vanId}`);
-              if (!vanResponse.ok) {
-                const errorData = await vanResponse.json();
-                console.error('NGP VAN Error response:', errorData);
+              const detailsResponse = await fetch(`/api/customer/${contact.customer.id}`);
+              if (!detailsResponse.ok) {
+                console.error(`Failed to fetch details for customer ${contact.customer.id}`);
                 continue;
               }
-              
-              const vanData = await vanResponse.json();
-              console.log('Received NGP VAN data for', contact.customer.displayName, ':', vanData);
-              
-              // Update the contact with the phone numbers from NGP VAN
-              if (vanData.phones && vanData.phones.length > 0) {
-                setContacts(prevContacts => 
-                  prevContacts.map(c => 
-                    c.customer.id === contact.customer.id 
-                      ? { ...c, phones: vanData.phones }
-                      : c
-                  )
-                );
-              }
+              const details = await detailsResponse.json();
+              console.log('Received customer details:', details);
+              setCustomerDetails(prev => ({
+                ...prev,
+                [contact.customer.id]: details
+              }));
             } catch (error) {
-              console.error('Error fetching NGP VAN data for', contact.customer.displayName, ':', error);
+              console.error('Error fetching customer details:', error);
             }
           }
         }
@@ -83,6 +76,8 @@ export default function Home() {
     } catch (error) {
       console.error('Error fetching contacts:', error);
       setError(error.message);
+    } finally {
+      setLoading(false);
     }
   };
 
