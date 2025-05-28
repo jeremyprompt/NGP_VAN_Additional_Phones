@@ -48,25 +48,36 @@ export default function Home() {
       console.log('Received contacts:', contacts);
       setContacts(contacts);
 
-      // If we have a vanId, fetch the NGP VAN details
-      if (contacts.vanId) {
-        console.log('Fetching NGP VAN details for vanId:', contacts.vanId);
-        const vanResponse = await fetch(`/api/ngpvan/${contacts.vanId}`);
-        if (!vanResponse.ok) {
-          const errorData = await vanResponse.json();
-          console.error('NGP VAN Error response:', errorData);
-          throw new Error(errorData.error || 'Failed to fetch NGP VAN details');
-        }
-        
-        const vanData = await vanResponse.json();
-        console.log('Received NGP VAN data:', vanData);
-        
-        // Update the contacts with the phone numbers from NGP VAN
-        if (vanData.phones && vanData.phones.length > 0) {
-          setContacts(prevContacts => ({
-            ...prevContacts,
-            phones: vanData.phones
-          }));
+      // Check each contact for vanId
+      if (Array.isArray(contacts)) {
+        for (const contact of contacts) {
+          if (contact.customer?.vanId) {
+            console.log('Found vanId:', contact.customer.vanId, 'for contact:', contact.customer.displayName);
+            try {
+              const vanResponse = await fetch(`/api/ngpvan/${contact.customer.vanId}`);
+              if (!vanResponse.ok) {
+                const errorData = await vanResponse.json();
+                console.error('NGP VAN Error response:', errorData);
+                continue;
+              }
+              
+              const vanData = await vanResponse.json();
+              console.log('Received NGP VAN data for', contact.customer.displayName, ':', vanData);
+              
+              // Update the contact with the phone numbers from NGP VAN
+              if (vanData.phones && vanData.phones.length > 0) {
+                setContacts(prevContacts => 
+                  prevContacts.map(c => 
+                    c.customer.id === contact.customer.id 
+                      ? { ...c, phones: vanData.phones }
+                      : c
+                  )
+                );
+              }
+            } catch (error) {
+              console.error('Error fetching NGP VAN data for', contact.customer.displayName, ':', error);
+            }
+          }
         }
       }
     } catch (error) {
