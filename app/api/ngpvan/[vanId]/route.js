@@ -20,12 +20,12 @@ export async function GET(request, { params }) {
 
     console.log('Making NGP VAN API call...', {
       vanId,
-      expand: 'phone',
+      expand: 'phones',
       baseUrl: 'https://api.securevan.com/v4'
     });
 
     const { data } = await ngpvan.peoplevanid1({
-      $expand: 'phone',
+      $expand: 'phones',
       vanId
     });
 
@@ -35,8 +35,8 @@ export async function GET(request, { params }) {
 
     console.log('Retrieved NGP VAN data:', {
       hasData: !!data,
-      hasPhone: !!data.phone,
-      phoneCount: data.phone?.length
+      hasPhones: !!data.phones,
+      phoneCount: data.phones?.length
     });
 
     return Response.json(data);

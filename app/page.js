@@ -189,7 +189,7 @@ export default function Home() {
                       {ngpVanDetails[customerId] && (
                         <div className="mt-4 p-4 bg-blue-50 rounded">
                           <h4 className="font-semibold mb-2 text-black">NGP VAN Phone Numbers:</h4>
-                          {ngpVanDetails[customerId].phone?.map((phone, index) => (
+                          {ngpVanDetails[customerId].phones?.map((phone, index) => (
                             <div key={index} className="mb-2 p-2 bg-white rounded shadow-sm">
                               <p className="font-medium">{phone.phoneNumber}</p>
                               <p className="text-xs text-gray-500">
