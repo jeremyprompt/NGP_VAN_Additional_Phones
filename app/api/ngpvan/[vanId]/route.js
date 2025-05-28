@@ -20,7 +20,7 @@ export async function GET(request, { params }) {
 
     console.log('Making NGP VAN API call...');
     const { data } = await ngpvan.peoplevanid1({
-      $expand: 'phones',
+      $expand: 'phone',
       vanId
     });
 
