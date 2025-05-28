@@ -32,32 +32,46 @@ export default function Home() {
   };
 
   const fetchContacts = async (listId) => {
-    console.log('Fetching contacts for listId:', listId);
-    setLoading(true);
-    setError(null);
-    setContacts([]);
-    setCustomerDetails({});
-    setNgpVanDetails({});
     try {
-      const url = `/api/contacts?listId=${listId}`;
-      console.log('Making request to:', url);
+      console.log('Fetching contacts for listId:', listId);
+      const url = `/api/contacts${listId ? `?listId=${listId}` : ''}`;
+      console.log('Request URL:', url);
+      
       const response = await fetch(url);
       if (!response.ok) {
         const errorData = await response.json();
         console.error('Error response:', errorData);
         throw new Error(errorData.error || 'Failed to fetch contacts');
       }
-      const data = await response.json();
-      console.log('Received contacts data:', data);
       
-      const contactsData = data.contacts || [];
-      setContacts(contactsData);
-      setSelectedList(listId);
-    } catch (err) {
-      setError(err.message);
-      console.error('Error fetching contacts:', err);
-    } finally {
-      setLoading(false);
+      const contacts = await response.json();
+      console.log('Received contacts:', contacts);
+      setContacts(contacts);
+
+      // If we have a vanId, fetch the NGP VAN details
+      if (contacts.vanId) {
+        console.log('Fetching NGP VAN details for vanId:', contacts.vanId);
+        const vanResponse = await fetch(`/api/ngpvan/${contacts.vanId}`);
+        if (!vanResponse.ok) {
+          const errorData = await vanResponse.json();
+          console.error('NGP VAN Error response:', errorData);
+          throw new Error(errorData.error || 'Failed to fetch NGP VAN details');
+        }
+        
+        const vanData = await vanResponse.json();
+        console.log('Received NGP VAN data:', vanData);
+        
+        // Update the contacts with the phone numbers from NGP VAN
+        if (vanData.phones && vanData.phones.length > 0) {
+          setContacts(prevContacts => ({
+            ...prevContacts,
+            phones: vanData.phones
+          }));
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching contacts:', error);
+      setError(error.message);
     }
   };
 
