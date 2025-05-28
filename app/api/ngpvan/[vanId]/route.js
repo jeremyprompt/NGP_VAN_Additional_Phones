@@ -18,7 +18,12 @@ export async function GET(request, { params }) {
     // Initialize with environment variables
     ngpvan.auth(process.env.NGP_VAN_USERNAME, process.env.NGP_VAN_PASSWORD);
 
-    console.log('Making NGP VAN API call...');
+    console.log('Making NGP VAN API call...', {
+      vanId,
+      expand: 'phone',
+      baseUrl: 'https://api.securevan.com/v4'
+    });
+
     const { data } = await ngpvan.peoplevanid1({
       $expand: 'phone',
       vanId
@@ -28,14 +33,23 @@ export async function GET(request, { params }) {
       throw new Error('No data received from NGP VAN API');
     }
 
-    console.log('Retrieved NGP VAN data:', data);
+    console.log('Retrieved NGP VAN data:', {
+      hasData: !!data,
+      hasPhone: !!data.phone,
+      phoneCount: data.phone?.length
+    });
+
     return Response.json(data);
   } catch (error) {
     console.error('Error in NGP VAN API route:', {
       message: error.message,
       stack: error.stack,
       type: error.constructor.name,
-      vanId: params.vanId
+      vanId: params.vanId,
+      env: {
+        hasUsername: !!process.env.NGP_VAN_USERNAME,
+        hasPassword: !!process.env.NGP_VAN_PASSWORD
+      }
     });
     
     return Response.json(
