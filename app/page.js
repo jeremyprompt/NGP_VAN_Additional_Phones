@@ -52,28 +52,6 @@ export default function Home() {
       // Extract the contacts array from the response
       const contacts = data.contacts || [];
       setContacts(contacts);
-
-      // Fetch customer details for each contact
-      for (const contact of contacts) {
-        if (contact.customer?.id) {
-          console.log('Fetching details for customer:', contact.customer.id);
-          try {
-            const detailsResponse = await fetch(`/api/customer/${contact.customer.id}`);
-            if (!detailsResponse.ok) {
-              console.error(`Failed to fetch details for customer ${contact.customer.id}`);
-              continue;
-            }
-            const details = await detailsResponse.json();
-            console.log('Received customer details:', details);
-            setCustomerDetails(prev => ({
-              ...prev,
-              [contact.customer.id]: details
-            }));
-          } catch (error) {
-            console.error('Error fetching customer details:', error);
-          }
-        }
-      }
     } catch (error) {
       console.error('Error fetching contacts:', error);
       setError(error.message);
@@ -179,34 +157,18 @@ export default function Home() {
                       {contact.customer.channels.map((channel, index) => (
                         <p key={index}>Phone: {channel.key}</p>
                       ))}
-                      {!details && (
-                        <button
-                          onClick={() => fetchContactDetails(customerId)}
-                          className="mt-2 px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700"
-                        >
-                          Load Details
-                        </button>
-                      )}
+                      <button
+                        onClick={() => fetchContactDetails(customerId)}
+                        className="mt-2 px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700"
+                      >
+                        Get Customer Details
+                      </button>
                       {details && (
                         <div className="mt-4 p-4 bg-gray-50 rounded">
                           <h4 className="font-semibold mb-2 text-black">Customer Details:</h4>
-                          <div className="space-y-2">
-                            {details.identities?.map((identity, index) => (
-                              <p key={index} className="text-sm">
-                                {identity.type}: {identity.key}
-                              </p>
-                            ))}
-                            {details.tags?.map((tag, index) => (
-                              <p key={index} className="text-sm">
-                                Tag: {tag.name}
-                              </p>
-                            ))}
-                            {details.contactLists?.map((list, index) => (
-                              <p key={index} className="text-sm">
-                                List: {list.name}
-                              </p>
-                            ))}
-                          </div>
+                          <pre className="text-xs overflow-auto whitespace-pre-wrap">
+                            {JSON.stringify(details, null, 2)}
+                          </pre>
                         </div>
                       )}
                     </div>
