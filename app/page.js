@@ -72,17 +72,26 @@ export default function Home() {
       
       const details = await response.json();
       console.log('Received customer details:', details);
+
+      // Extract vanId from the response
+      const vanId = details.vanId;
+      console.log('Extracted vanId:', vanId);
+
+      // Store both the full details and the vanId
       setCustomerDetails(prev => ({
         ...prev,
-        [customerId]: details
+        [customerId]: {
+          ...details,
+          vanId // Store vanId at the top level for easy access
+        }
       }));
 
       // Fetch NGP VAN details if vanId exists
-      if (details.vanId) {
+      if (vanId) {
         try {
-          const ngpVanResponse = await fetch(`/api/ngpvan/${details.vanId}`);
+          const ngpVanResponse = await fetch(`/api/ngpvan/${vanId}`);
           if (!ngpVanResponse.ok) {
-            console.error(`Failed to fetch NGP VAN details for vanId ${details.vanId}`);
+            console.error(`Failed to fetch NGP VAN details for vanId ${vanId}`);
             return;
           }
           const ngpVanData = await ngpVanResponse.json();
@@ -91,7 +100,7 @@ export default function Home() {
             [customerId]: ngpVanData
           }));
         } catch (err) {
-          console.error(`Error fetching NGP VAN details for vanId ${details.vanId}:`, err);
+          console.error(`Error fetching NGP VAN details for vanId ${vanId}:`, err);
         }
       }
     } catch (err) {
