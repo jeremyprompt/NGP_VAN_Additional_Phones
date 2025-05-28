@@ -86,21 +86,27 @@ export default function Home() {
         }
       }));
 
-      // Fetch NGP VAN details if vanId exists
+      // If we have a vanId, fetch NGP VAN data
       if (vanId) {
         try {
+          console.log('Fetching NGP VAN data for vanId:', vanId);
           const ngpVanResponse = await fetch(`/api/ngpvan/${vanId}`);
+          
           if (!ngpVanResponse.ok) {
-            console.error(`Failed to fetch NGP VAN details for vanId ${vanId}`);
+            console.error(`Failed to fetch NGP VAN data for vanId ${vanId}`);
             return;
           }
+          
           const ngpVanData = await ngpVanResponse.json();
+          console.log('Received NGP VAN data:', ngpVanData);
+          
+          // Store the NGP VAN data
           setNgpVanDetails(prev => ({
             ...prev,
             [customerId]: ngpVanData
           }));
-        } catch (err) {
-          console.error(`Error fetching NGP VAN details for vanId ${vanId}:`, err);
+        } catch (error) {
+          console.error('Error fetching NGP VAN data:', error);
         }
       }
     } catch (err) {

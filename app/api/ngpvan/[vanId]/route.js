@@ -4,15 +4,22 @@ export const dynamic = "force-dynamic";
 
 export async function GET(request, { params }) {
   try {
-    const vanId = params.vanId;
-    console.log('Fetching NGP VAN details for ID:', vanId);
+    const { vanId } = params;
+    console.log('Fetching NGP VAN details for vanId:', vanId);
+
+    if (!process.env.NGP_VAN_USERNAME || !process.env.NGP_VAN_PASSWORD) {
+      throw new Error('NGP VAN credentials not configured');
+    }
+
+    // Initialize with environment variables
+    ngpvan.auth(process.env.NGP_VAN_USERNAME, process.env.NGP_VAN_PASSWORD);
 
     const { data } = await ngpvan.peoplevanid1({
       $expand: 'phones',
-      vanId: vanId
+      vanId
     });
-    
-    console.log('Received NGP VAN data:', data);
+
+    console.log('Retrieved NGP VAN data:', data);
     return Response.json(data);
   } catch (error) {
     console.error('Error in NGP VAN API route:', {
