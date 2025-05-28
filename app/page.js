@@ -168,6 +168,7 @@ export default function Home() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {contacts.map((contact) => {
                 const customerId = contact.customer.id;
+                const details = customerDetails[customerId];
                 return (
                   <div key={customerId} className="p-6 border rounded-lg shadow-md bg-white hover:shadow-lg transition-shadow duration-200">
                     <h3 className="text-lg font-semibold mb-2 text-black">
@@ -178,12 +179,36 @@ export default function Home() {
                       {contact.customer.channels.map((channel, index) => (
                         <p key={index}>Phone: {channel.key}</p>
                       ))}
-                      <button
-                        onClick={() => fetchContactDetails(customerId)}
-                        className="mt-2 px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700"
-                      >
-                        Load Details
-                      </button>
+                      {!details && (
+                        <button
+                          onClick={() => fetchContactDetails(customerId)}
+                          className="mt-2 px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700"
+                        >
+                          Load Details
+                        </button>
+                      )}
+                      {details && (
+                        <div className="mt-4 p-4 bg-gray-50 rounded">
+                          <h4 className="font-semibold mb-2 text-black">Customer Details:</h4>
+                          <div className="space-y-2">
+                            {details.identities?.map((identity, index) => (
+                              <p key={index} className="text-sm">
+                                {identity.type}: {identity.key}
+                              </p>
+                            ))}
+                            {details.tags?.map((tag, index) => (
+                              <p key={index} className="text-sm">
+                                Tag: {tag.name}
+                              </p>
+                            ))}
+                            {details.contactLists?.map((list, index) => (
+                              <p key={index} className="text-sm">
+                                List: {list.name}
+                              </p>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 );
