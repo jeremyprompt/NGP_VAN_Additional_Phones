@@ -114,8 +114,14 @@ export default function Home() {
     }
   };
 
-  const generateSecondaryPhonesList = (listId) => {
-    console.log('Success');
+  const generateSecondaryPhonesList = async (listId) => {
+    try {
+      await fetchContacts(listId);
+      const customerIds = contacts.map(contact => contact.customer.id);
+      console.log('Customer IDs:', customerIds);
+    } catch (error) {
+      console.error('Error generating secondary phones list:', error);
+    }
   };
 
   return (
