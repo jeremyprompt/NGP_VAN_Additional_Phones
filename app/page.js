@@ -121,6 +121,40 @@ export default function Home() {
 
   const generateSecondaryPhonesList = async (listId) => {
     try {
+      // First, check if the contact list exists
+      const checkResponse = await fetch('/api/contact-lists/check');
+      if (!checkResponse.ok) {
+        throw new Error('Failed to check existing contact lists');
+      }
+      
+      const existingLists = await checkResponse.json();
+      console.log('Existing lists response:', existingLists);
+      
+      // Check if the response is an array
+      if (!Array.isArray(existingLists)) {
+        console.error('Unexpected response format:', existingLists);
+        throw new Error('Invalid response format from contact lists check');
+      }
+      
+      const targetList = existingLists.find(list => list.apiId === 'NGP_VAN_ADDITIONAL_NUMBERS');
+      
+      if (targetList) {
+        console.log('List already exists:', targetList);
+      } else {
+        // Create the list if it doesn't exist
+        const contactListResponse = await fetch('/api/contact-lists', {
+          method: 'POST'
+        });
+        
+        if (!contactListResponse.ok) {
+          throw new Error('Failed to create contact list');
+        }
+        
+        const contactListData = await contactListResponse.json();
+        console.log('Created new contact list:', contactListData);
+      }
+
+      // Now fetch and process contacts
       const response = await fetch(`/api/contacts${listId ? `?listId=${listId}` : ''}`);
       if (!response.ok) {
         throw new Error('Failed to fetch contacts');
@@ -150,44 +184,9 @@ export default function Home() {
           if (ngpVanData.phones && ngpVanData.phones.length > 0) {
             console.log(`First phone number for vanId ${details.vanId}:`, ngpVanData.phones[0].phoneNumber);
             
-            // If there are multiple phones, check for existing list and create if needed
+            // If there are multiple phones, we already have the list created
             if (ngpVanData.phones.length > 1) {
-              try {
-                // First, check for existing lists
-                const checkResponse = await fetch('/api/contact-lists/check');
-                if (!checkResponse.ok) {
-                  throw new Error('Failed to check existing contact lists');
-                }
-                
-                const existingLists = await checkResponse.json();
-                console.log('Existing lists response:', existingLists);
-                
-                // Check if the response is an array
-                if (!Array.isArray(existingLists)) {
-                  console.error('Unexpected response format:', existingLists);
-                  throw new Error('Invalid response format from contact lists check');
-                }
-                
-                const targetList = existingLists.find(list => list.apiId === 'NGP_VAN_ADDITIONAL_NUMBERS');
-                
-                if (targetList) {
-                  console.log('List already exists:', targetList);
-                } else {
-                  // Create the list if it doesn't exist
-                  const contactListResponse = await fetch('/api/contact-lists', {
-                    method: 'POST'
-                  });
-                  
-                  if (!contactListResponse.ok) {
-                    throw new Error('Failed to create contact list');
-                  }
-                  
-                  const contactListData = await contactListResponse.json();
-                  console.log('Created new contact list:', contactListData);
-                }
-              } catch (listError) {
-                console.error('Error handling contact list:', listError);
-              }
+              console.log(`Found ${ngpVanData.phones.length} phones for vanId ${details.vanId}`);
             }
           } else {
             console.log(`No phones found for vanId ${details.vanId}`);
