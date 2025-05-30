@@ -2,6 +2,11 @@
 
 import { useState } from 'react';
 import ContactDisplay from '@/components/ContactDisplay';
+import ngpvan from '@api/ngpvan';
+
+// Add NGP VAN credentials
+const NGP_VAN_USERNAME = process.env.NEXT_PUBLIC_NGP_VAN_USERNAME;
+const NGP_VAN_PASSWORD = process.env.NEXT_PUBLIC_NGP_VAN_PASSWORD;
 
 export default function Home() {
   const [lists, setLists] = useState([]);
@@ -133,6 +138,23 @@ export default function Home() {
         }
         const details = await detailsResponse.json();
         console.log(`Customer ID ${customerId} - vanId:`, details.vanId);
+
+        // Make NGP VAN API call
+        try {
+          ngpvan.auth(NGP_VAN_USERNAME, NGP_VAN_PASSWORD);
+          const ngpVanResponse = await ngpvan.peoplevanid1({
+            $expand: 'phones%2Cemails',
+            vanId: details.vanId
+          });
+          
+          if (ngpVanResponse.data.phones && ngpVanResponse.data.phones.length > 0) {
+            console.log(`First phone number for vanId ${details.vanId}:`, ngpVanResponse.data.phones[0].phoneNumber);
+          } else {
+            console.log(`No phones found for vanId ${details.vanId}`);
+          }
+        } catch (ngpError) {
+          console.error(`Error fetching NGP VAN data for vanId ${details.vanId}:`, ngpError);
+        }
       }
     } catch (error) {
       console.error('Error generating secondary phones list:', error);
