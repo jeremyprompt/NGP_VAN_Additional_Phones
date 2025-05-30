@@ -19,17 +19,14 @@ export async function GET(request) {
     console.log('Search params:', Object.fromEntries(searchParams.entries()));
     console.log('ListId from params:', listId);
 
-    const client = new PromptIoClient();
-    console.log('Created Prompt.io client');
-    
     if (listId) {
       console.log(`Fetching contacts for list ${listId}`);
-      const contacts = await client.getAllContactsFromList(listId);
+      const contacts = await PromptIoClient.getAllContactsFromList(listId);
       console.log(`Retrieved ${contacts.length} contacts for list ${listId}`);
       return Response.json({ contacts });
     } else {
       console.log('Fetching contact lists');
-      const lists = await client.getContactLists();
+      const lists = await PromptIoClient.getContactLists();
       return Response.json({ lists });
     }
   } catch (error) {
