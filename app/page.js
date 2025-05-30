@@ -116,8 +116,12 @@ export default function Home() {
 
   const generateSecondaryPhonesList = async (listId) => {
     try {
-      await fetchContacts(listId);
-      const customerIds = contacts.map(contact => contact.customer.id);
+      const response = await fetch(`/api/contacts${listId ? `?listId=${listId}` : ''}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch contacts');
+      }
+      const data = await response.json();
+      const customerIds = data.contacts.map(contact => contact.customer.id);
       console.log('Customer IDs:', customerIds);
     } catch (error) {
       console.error('Error generating secondary phones list:', error);
