@@ -139,16 +139,16 @@ export default function Home() {
         const details = await detailsResponse.json();
         console.log(`Customer ID ${customerId} - vanId:`, details.vanId);
 
-        // Make NGP VAN API call
+        // Make NGP VAN API call through our server-side route
         try {
-          ngpvan.auth(NGP_VAN_USERNAME, NGP_VAN_PASSWORD);
-          const ngpVanResponse = await ngpvan.peoplevanid1({
-            $expand: 'phones%2Cemails',
-            vanId: details.vanId
-          });
+          const ngpVanResponse = await fetch(`/api/ngpvan/${details.vanId}`);
+          if (!ngpVanResponse.ok) {
+            throw new Error(`Failed to fetch NGP VAN data for vanId ${details.vanId}`);
+          }
+          const ngpVanData = await ngpVanResponse.json();
           
-          if (ngpVanResponse.data.phones && ngpVanResponse.data.phones.length > 0) {
-            console.log(`First phone number for vanId ${details.vanId}:`, ngpVanResponse.data.phones[0].phoneNumber);
+          if (ngpVanData.phones && ngpVanData.phones.length > 0) {
+            console.log(`First phone number for vanId ${details.vanId}:`, ngpVanData.phones[0].phoneNumber);
           } else {
             console.log(`No phones found for vanId ${details.vanId}`);
           }
