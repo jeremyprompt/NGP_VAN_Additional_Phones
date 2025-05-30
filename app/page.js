@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import ContactDisplay from '@/components/ContactDisplay';
-import ngpvan from '@api/ngpvan';
+import ngpvan from '@/lib/ngpvan';
 
 // Add NGP VAN credentials
 const NGP_VAN_USERNAME = process.env.NGP_VAN_USERNAME;
