@@ -203,10 +203,33 @@ export default function Home() {
               // Get the display name
               const displayName = `${ngpVanData.firstName} ${ngpVanData.lastName}`.trim();
               
+              // Validate display name
+              if (!displayName || displayName === ' ') {
+                console.error('Invalid display name:', {
+                  firstName: ngpVanData.firstName,
+                  lastName: ngpVanData.lastName,
+                  vanId: details.vanId
+                });
+                continue; // Skip this contact if no valid name
+              }
+              
+              console.log('Creating display name:', {
+                firstName: ngpVanData.firstName,
+                lastName: ngpVanData.lastName,
+                displayName: displayName,
+                vanId: details.vanId
+              });
+              
               // Add each additional phone number to the list
               for (let i = 1; i < ngpVanData.phones.length; i++) {
                 const phone = ngpVanData.phones[i];
                 try {
+                  console.log('Adding contact to list:', {
+                    phoneNumber: phone.phoneNumber,
+                    displayName: displayName,
+                    listId: targetList.id
+                  });
+                  
                   const addContactResponse = await fetch(`/api/contact-lists/${targetList.id}/contacts`, {
                     method: 'POST',
                     headers: {
