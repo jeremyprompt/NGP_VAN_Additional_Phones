@@ -136,7 +136,7 @@ export default function Home() {
         throw new Error('Invalid response format from contact lists check');
       }
       
-      const targetList = existingLists.find(list => list.apiId === 'NGP_VAN_ADDITIONAL_NUMBERS');
+      const targetList = existingLists.find(list => list.name === 'NGP_VAN_ADDITIONAL_NUMBERS');
       
       if (targetList) {
         console.log('List already exists:', targetList);
