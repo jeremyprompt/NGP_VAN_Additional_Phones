@@ -139,7 +139,8 @@ export default function Home() {
       // Log all list names for debugging
       console.log('All list names:', existingLists.map(list => list.name));
       
-      const targetList = existingLists.find(list => {
+      let targetList = null;
+      const targetListIndex = existingLists.findIndex(list => {
         console.log('Checking list:', {
           name: list.name,
           matches: list.name === 'NGP_VAN_ADDITIONAL_NUMBERS'
@@ -147,8 +148,9 @@ export default function Home() {
         return list.name === 'NGP_VAN_ADDITIONAL_NUMBERS';
       });
       
-      if (targetList) {
-        console.log('List already exists:', targetList);
+      if (targetListIndex !== -1) {
+        console.log('List already exists:', existingLists[targetListIndex]);
+        targetList = existingLists[targetListIndex];
       } else {
         // Create the list if it doesn't exist
         const contactListResponse = await fetch('/api/contact-lists', {
@@ -161,6 +163,7 @@ export default function Home() {
         
         const contactListData = await contactListResponse.json();
         console.log('Created new contact list:', contactListData);
+        targetList = contactListData; // Store the newly created list
       }
 
       // Now fetch and process contacts
@@ -193,9 +196,41 @@ export default function Home() {
           if (ngpVanData.phones && ngpVanData.phones.length > 0) {
             console.log(`First phone number for vanId ${details.vanId}:`, ngpVanData.phones[0].phoneNumber);
             
-            // If there are multiple phones, we already have the list created
+            // If there are multiple phones, add additional ones to the list
             if (ngpVanData.phones.length > 1) {
               console.log(`Found ${ngpVanData.phones.length} phones for vanId ${details.vanId}`);
+              
+              // Get the display name
+              const displayName = `${ngpVanData.firstName} ${ngpVanData.lastName}`.trim();
+              
+              // Add each additional phone number to the list
+              for (let i = 1; i < ngpVanData.phones.length; i++) {
+                const phone = ngpVanData.phones[i];
+                try {
+                  const addContactResponse = await fetch(`/api/contact-lists/${targetList.id}/contacts`, {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                      identityType: 'SMS',
+                      contacts: [{
+                        identityKey: phone.phoneNumber,
+                        displayName: displayName
+                      }]
+                    })
+                  });
+
+                  if (!addContactResponse.ok) {
+                    throw new Error(`Failed to add contact for phone ${phone.phoneNumber}`);
+                  }
+
+                  const addContactData = await addContactResponse.json();
+                  console.log(`Added phone ${phone.phoneNumber} to list:`, addContactData);
+                } catch (addError) {
+                  console.error(`Error adding phone ${phone.phoneNumber} to list:`, addError);
+                }
+              }
             }
           } else {
             console.log(`No phones found for vanId ${details.vanId}`);
