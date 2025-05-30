@@ -5,8 +5,8 @@ import ContactDisplay from '@/components/ContactDisplay';
 import ngpvan from '@api/ngpvan';
 
 // Add NGP VAN credentials
-const NGP_VAN_USERNAME = process.env.NEXT_PUBLIC_NGP_VAN_USERNAME;
-const NGP_VAN_PASSWORD = process.env.NEXT_PUBLIC_NGP_VAN_PASSWORD;
+const NGP_VAN_USERNAME = process.env.NGP_VAN_USERNAME;
+const NGP_VAN_PASSWORD = process.env.NGP_VAN_PASSWORD;
 
 export default function Home() {
   const [lists, setLists] = useState([]);
