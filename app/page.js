@@ -114,6 +114,10 @@ export default function Home() {
     }
   };
 
+  const generateSecondaryPhonesList = (listId) => {
+    console.log('Success');
+  };
+
   return (
     <main className="min-h-screen p-8">
       <div className="max-w-6xl mx-auto">
@@ -146,6 +150,13 @@ export default function Home() {
                     className="mt-4 w-full px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:bg-green-300"
                   >
                     {loading && selectedList === list.id ? 'Loading Contacts...' : 'Display Contacts'}
+                  </button>
+                  <button
+                    onClick={() => generateSecondaryPhonesList(list.id)}
+                    disabled={loading}
+                    className="mt-2 w-full px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 disabled:bg-purple-300"
+                  >
+                    Generate Secondary Phones List
                   </button>
                 </div>
               </div>
