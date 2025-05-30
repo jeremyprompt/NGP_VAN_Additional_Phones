@@ -123,6 +123,17 @@ export default function Home() {
       const data = await response.json();
       const customerIds = data.contacts.map(contact => contact.customer.id);
       console.log('Customer IDs:', customerIds);
+
+      // Fetch contact details for each customer ID
+      for (const customerId of customerIds) {
+        const detailsResponse = await fetch(`/api/customer/${customerId}`);
+        if (!detailsResponse.ok) {
+          console.error(`Failed to fetch details for customer ${customerId}`);
+          continue;
+        }
+        const details = await detailsResponse.json();
+        console.log(`Customer ID ${customerId} - vanId:`, details.vanId);
+      }
     } catch (error) {
       console.error('Error generating secondary phones list:', error);
     }
