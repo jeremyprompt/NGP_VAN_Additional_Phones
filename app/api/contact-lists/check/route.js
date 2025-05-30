@@ -17,8 +17,8 @@ export async function GET() {
     const data = await response.json();
     console.log('Raw API response:', JSON.stringify(data, null, 2));
 
-    // Ensure we're returning an array of lists
-    const lists = Array.isArray(data) ? data : data.lists || [];
+    // Extract the contactLists array from the response
+    const lists = data.contactLists || [];
     console.log('Processed lists:', JSON.stringify(lists, null, 2));
     
     // Log each list's name for debugging
