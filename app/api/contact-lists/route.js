@@ -12,7 +12,7 @@ export async function POST() {
       body: JSON.stringify({
         name: "NGP_VAN_ADDITIONAL_NUMBERS",
         apiId: "NGP_VAN_ADDITIONAL_NUMBERS",
-        icon: "string",
+        icon: "",
         description: "Additional numbers found in NGP VAN"
       })
     });

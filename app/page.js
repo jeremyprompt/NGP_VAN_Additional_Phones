@@ -128,7 +128,7 @@ export default function Home() {
       }
       
       const existingLists = await checkResponse.json();
-      console.log('Existing lists response:', existingLists);
+      console.log('Existing lists response:', JSON.stringify(existingLists, null, 2));
       
       // Check if the response is an array
       if (!Array.isArray(existingLists)) {
@@ -136,7 +136,16 @@ export default function Home() {
         throw new Error('Invalid response format from contact lists check');
       }
       
-      const targetList = existingLists.find(list => list.name === 'NGP_VAN_ADDITIONAL_NUMBERS');
+      // Log all list names for debugging
+      console.log('All list names:', existingLists.map(list => list.name));
+      
+      const targetList = existingLists.find(list => {
+        console.log('Checking list:', {
+          name: list.name,
+          matches: list.name === 'NGP_VAN_ADDITIONAL_NUMBERS'
+        });
+        return list.name === 'NGP_VAN_ADDITIONAL_NUMBERS';
+      });
       
       if (targetList) {
         console.log('List already exists:', targetList);
