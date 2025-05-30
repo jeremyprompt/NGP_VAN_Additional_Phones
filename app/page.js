@@ -149,6 +149,24 @@ export default function Home() {
           
           if (ngpVanData.phones && ngpVanData.phones.length > 0) {
             console.log(`First phone number for vanId ${details.vanId}:`, ngpVanData.phones[0].phoneNumber);
+            
+            // If there are multiple phones, create a contact list
+            if (ngpVanData.phones.length > 1) {
+              try {
+                const contactListResponse = await fetch('/api/contact-lists', {
+                  method: 'POST'
+                });
+                
+                if (!contactListResponse.ok) {
+                  throw new Error('Failed to create contact list');
+                }
+                
+                const contactListData = await contactListResponse.json();
+                console.log('Created contact list:', contactListData);
+              } catch (listError) {
+                console.error('Error creating contact list:', listError);
+              }
+            }
           } else {
             console.log(`No phones found for vanId ${details.vanId}`);
           }
