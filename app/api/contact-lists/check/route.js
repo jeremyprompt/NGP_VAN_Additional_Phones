@@ -15,7 +15,11 @@ export async function GET() {
     }
 
     const data = await response.json();
-    return Response.json(data);
+    console.log('Raw API response:', data);
+
+    // Ensure we're returning an array of lists
+    const lists = Array.isArray(data) ? data : data.lists || [];
+    return Response.json(lists);
   } catch (error) {
     console.error('Error fetching contact lists:', error);
     return Response.json({ error: error.message }, { status: 500 });

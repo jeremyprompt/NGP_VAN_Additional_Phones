@@ -160,6 +160,14 @@ export default function Home() {
                 }
                 
                 const existingLists = await checkResponse.json();
+                console.log('Existing lists response:', existingLists);
+                
+                // Check if the response is an array
+                if (!Array.isArray(existingLists)) {
+                  console.error('Unexpected response format:', existingLists);
+                  throw new Error('Invalid response format from contact lists check');
+                }
+                
                 const targetList = existingLists.find(list => list.apiId === 'NGP_VAN_ADDITIONAL_NUMBERS');
                 
                 if (targetList) {
