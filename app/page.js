@@ -230,6 +230,9 @@ export default function Home() {
                     listId: targetList.id
                   });
                   
+                  // Add a small delay between operations
+                  await new Promise(resolve => setTimeout(resolve, 1000));
+                  
                   const addContactResponse = await fetch(`/api/contact-lists/${targetList.id}/contacts`, {
                     method: 'POST',
                     headers: {
@@ -245,11 +248,15 @@ export default function Home() {
                   });
 
                   if (!addContactResponse.ok) {
-                    throw new Error(`Failed to add contact for phone ${phone.phoneNumber}`);
+                    const errorData = await addContactResponse.json();
+                    throw new Error(`Failed to add contact for phone ${phone.phoneNumber}: ${JSON.stringify(errorData)}`);
                   }
 
                   const addContactData = await addContactResponse.json();
                   console.log(`Added phone ${phone.phoneNumber} to list:`, addContactData);
+                  
+                  // Add another small delay after successful addition
+                  await new Promise(resolve => setTimeout(resolve, 1000));
                 } catch (addError) {
                   console.error(`Error adding phone ${phone.phoneNumber} to list:`, addError);
                 }

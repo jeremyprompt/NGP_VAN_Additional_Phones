@@ -5,11 +5,30 @@ export async function POST(request, { params }) {
     const { listId } = params;
     const { identityType, contacts } = await request.json();
     
+    // Validate the request data
+    if (!contacts || !Array.isArray(contacts) || contacts.length === 0) {
+      throw new Error('Invalid contacts data: contacts must be a non-empty array');
+    }
+
+    // Validate each contact
+    contacts.forEach((contact, index) => {
+      if (!contact.identityKey || !contact.displayName) {
+        throw new Error(`Invalid contact at index ${index}: must have identityKey and displayName`);
+      }
+    });
+    
     console.log('Adding contacts to list:', {
       listId,
       identityType,
       contacts
     });
+
+    const requestBody = {
+      identityType,
+      contacts
+    };
+
+    console.log('Request body:', JSON.stringify(requestBody, null, 2));
 
     const response = await fetch(`https://jeremy.prompt.io/rest/1.0/contact_lists/${listId}/contacts`, {
       method: 'POST',
@@ -18,10 +37,7 @@ export async function POST(request, { params }) {
         'orgAuthToken': process.env.PROMPT_IO_AUTH_TOKEN,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({
-        identityType,
-        contacts
-      })
+      body: JSON.stringify(requestBody)
     });
 
     if (!response.ok) {
@@ -29,7 +45,8 @@ export async function POST(request, { params }) {
       console.error('Failed to add contacts:', {
         status: response.status,
         statusText: response.statusText,
-        error: errorText
+        error: errorText,
+        requestBody
       });
       throw new Error(`Failed to add contacts to list: ${response.statusText} - ${errorText}`);
     }
