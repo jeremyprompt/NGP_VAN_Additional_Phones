@@ -150,21 +150,35 @@ export default function Home() {
           if (ngpVanData.phones && ngpVanData.phones.length > 0) {
             console.log(`First phone number for vanId ${details.vanId}:`, ngpVanData.phones[0].phoneNumber);
             
-            // If there are multiple phones, create a contact list
+            // If there are multiple phones, check for existing list and create if needed
             if (ngpVanData.phones.length > 1) {
               try {
-                const contactListResponse = await fetch('/api/contact-lists', {
-                  method: 'POST'
-                });
-                
-                if (!contactListResponse.ok) {
-                  throw new Error('Failed to create contact list');
+                // First, check for existing lists
+                const checkResponse = await fetch('/api/contact-lists/check');
+                if (!checkResponse.ok) {
+                  throw new Error('Failed to check existing contact lists');
                 }
                 
-                const contactListData = await contactListResponse.json();
-                console.log('Created contact list:', contactListData);
+                const existingLists = await checkResponse.json();
+                const listExists = existingLists.some(list => list.apiId === 'NGP_VAN_ADDITIONAL_NUMBERS');
+                
+                if (!listExists) {
+                  // Create the list if it doesn't exist
+                  const contactListResponse = await fetch('/api/contact-lists', {
+                    method: 'POST'
+                  });
+                  
+                  if (!contactListResponse.ok) {
+                    throw new Error('Failed to create contact list');
+                  }
+                  
+                  const contactListData = await contactListResponse.json();
+                  console.log('Created contact list:', contactListData);
+                } else {
+                  console.log('Contact list already exists');
+                }
               } catch (listError) {
-                console.error('Error creating contact list:', listError);
+                console.error('Error handling contact list:', listError);
               }
             }
           } else {
