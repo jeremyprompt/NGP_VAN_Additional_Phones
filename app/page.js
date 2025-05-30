@@ -26,7 +26,6 @@ export default function Home() {
         throw new Error('Failed to fetch contact lists');
       }
       const data = await response.json();
-      console.log('Received lists data:', data);
       setLists(data.lists?.contactLists || []);
     } catch (err) {
       setError(err.message);
@@ -40,23 +39,15 @@ export default function Home() {
     setLoading(true);
     setError(null);
     try {
-      console.log('Fetching contacts for listId:', listId);
       const url = `/api/contacts${listId ? `?listId=${listId}` : ''}`;
-      console.log('Request URL:', url);
-      
       const response = await fetch(url);
       if (!response.ok) {
         const errorData = await response.json();
-        console.error('Error response:', errorData);
         throw new Error(errorData.error || 'Failed to fetch contacts');
       }
       
       const data = await response.json();
-      console.log('Received contacts data:', data);
-      
-      // Extract the contacts array from the response
-      const contacts = data.contacts || [];
-      setContacts(contacts);
+      setContacts(data.contacts || []);
     } catch (error) {
       console.error('Error fetching contacts:', error);
       setError(error.message);
@@ -67,45 +58,32 @@ export default function Home() {
 
   const fetchContactDetails = async (customerId) => {
     try {
-      console.log('Fetching details for customer:', customerId);
       const response = await fetch(`/api/customer/${customerId}`);
-      
       if (!response.ok) {
         console.error(`Failed to fetch details for customer ${customerId}`);
         return;
       }
       
       const details = await response.json();
-      console.log('Received customer details:', details);
-
-      // Extract vanId from the response
       const vanId = details.vanId;
-      console.log('Extracted vanId:', vanId);
 
-      // Store both the full details and the vanId
       setCustomerDetails(prev => ({
         ...prev,
         [customerId]: {
           ...details,
-          vanId // Store vanId at the top level for easy access
+          vanId
         }
       }));
 
-      // If we have a vanId, fetch NGP VAN data
       if (vanId) {
         try {
-          console.log('Fetching NGP VAN data for vanId:', vanId);
           const ngpVanResponse = await fetch(`/api/ngpvan/${vanId}`);
-          
           if (!ngpVanResponse.ok) {
             console.error(`Failed to fetch NGP VAN data for vanId ${vanId}`);
             return;
           }
           
           const ngpVanData = await ngpVanResponse.json();
-          console.log('Received NGP VAN data:', ngpVanData);
-          
-          // Store the NGP VAN data
           setNgpVanDetails(prev => ({
             ...prev,
             [customerId]: ngpVanData
@@ -121,38 +99,22 @@ export default function Home() {
 
   const generateSecondaryPhonesList = async (listId) => {
     try {
-      // First, check if the contact list exists
       const checkResponse = await fetch('/api/contact-lists/check');
       if (!checkResponse.ok) {
         throw new Error('Failed to check existing contact lists');
       }
       
       const existingLists = await checkResponse.json();
-      console.log('Existing lists response:', JSON.stringify(existingLists, null, 2));
-      
-      // Check if the response is an array
       if (!Array.isArray(existingLists)) {
-        console.error('Unexpected response format:', existingLists);
         throw new Error('Invalid response format from contact lists check');
       }
       
-      // Log all list names for debugging
-      console.log('All list names:', existingLists.map(list => list.name));
-      
       let targetList = null;
-      const targetListIndex = existingLists.findIndex(list => {
-        console.log('Checking list:', {
-          name: list.name,
-          matches: list.name === 'NGP_VAN_ADDITIONAL_NUMBERS'
-        });
-        return list.name === 'NGP_VAN_ADDITIONAL_NUMBERS';
-      });
+      const targetListIndex = existingLists.findIndex(list => list.name === 'NGP_VAN_ADDITIONAL_NUMBERS');
       
       if (targetListIndex !== -1) {
-        console.log('List already exists:', existingLists[targetListIndex]);
         targetList = existingLists[targetListIndex];
       } else {
-        // Create the list if it doesn't exist
         const contactListResponse = await fetch('/api/contact-lists', {
           method: 'POST'
         });
@@ -162,20 +124,16 @@ export default function Home() {
         }
         
         const contactListData = await contactListResponse.json();
-        console.log('Created new contact list:', contactListData);
-        targetList = contactListData; // Store the newly created list
+        targetList = contactListData;
       }
 
-      // Now fetch and process contacts
       const response = await fetch(`/api/contacts${listId ? `?listId=${listId}` : ''}`);
       if (!response.ok) {
         throw new Error('Failed to fetch contacts');
       }
       const data = await response.json();
       const customerIds = data.contacts.map(contact => contact.customer.id);
-      console.log('Customer IDs:', customerIds);
 
-      // Fetch contact details for each customer ID
       for (const customerId of customerIds) {
         const detailsResponse = await fetch(`/api/customer/${customerId}`);
         if (!detailsResponse.ok) {
@@ -183,9 +141,7 @@ export default function Home() {
           continue;
         }
         const details = await detailsResponse.json();
-        console.log(`Customer ID ${customerId} - vanId:`, details.vanId);
 
-        // Make NGP VAN API call through our server-side route
         try {
           const ngpVanResponse = await fetch(`/api/ngpvan/${details.vanId}`);
           if (!ngpVanResponse.ok) {
@@ -193,77 +149,48 @@ export default function Home() {
           }
           const ngpVanData = await ngpVanResponse.json();
           
-          if (ngpVanData.phones && ngpVanData.phones.length > 0) {
-            console.log(`First phone number for vanId ${details.vanId}:`, ngpVanData.phones[0].phoneNumber);
+          if (ngpVanData.phones && ngpVanData.phones.length > 1) {
+            const displayName = `${ngpVanData.firstName} ${ngpVanData.lastName}`.trim();
             
-            // If there are multiple phones, add additional ones to the list
-            if (ngpVanData.phones.length > 1) {
-              console.log(`Found ${ngpVanData.phones.length} phones for vanId ${details.vanId}`);
-              
-              // Get the display name
-              const displayName = `${ngpVanData.firstName} ${ngpVanData.lastName}`.trim();
-              
-              // Validate display name
-              if (!displayName || displayName === ' ') {
-                console.error('Invalid display name:', {
-                  firstName: ngpVanData.firstName,
-                  lastName: ngpVanData.lastName,
-                  vanId: details.vanId
-                });
-                continue; // Skip this contact if no valid name
-              }
-              
-              console.log('Creating display name:', {
+            if (!displayName || displayName === ' ') {
+              console.error('Invalid display name:', {
                 firstName: ngpVanData.firstName,
                 lastName: ngpVanData.lastName,
-                displayName: displayName,
                 vanId: details.vanId
               });
-              
-              // Add each additional phone number to the list
-              for (let i = 1; i < ngpVanData.phones.length; i++) {
-                const phone = ngpVanData.phones[i];
-                try {
-                  console.log('Adding contact to list:', {
-                    phoneNumber: phone.phoneNumber,
-                    displayName: displayName,
-                    listId: targetList.id
-                  });
-                  
-                  // Add a small delay between operations
-                  await new Promise(resolve => setTimeout(resolve, 1000));
-                  
-                  const addContactResponse = await fetch(`/api/contact-lists/${targetList.id}/contacts`, {
-                    method: 'POST',
-                    headers: {
-                      'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                      identityType: 'SMS',
-                      contacts: [{
-                        identityKey: phone.phoneNumber,
-                        displayName: displayName
-                      }]
-                    })
-                  });
+              continue;
+            }
+            
+            for (let i = 1; i < ngpVanData.phones.length; i++) {
+              const phone = ngpVanData.phones[i];
+              try {
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                const addContactResponse = await fetch(`/api/contact-lists/${targetList.id}/contacts`, {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json'
+                  },
+                  body: JSON.stringify({
+                    identityType: 'SMS',
+                    contacts: [{
+                      identityKey: phone.phoneNumber,
+                      displayName: displayName
+                    }]
+                  })
+                });
 
-                  if (!addContactResponse.ok) {
-                    const errorData = await addContactResponse.json();
-                    throw new Error(`Failed to add contact for phone ${phone.phoneNumber}: ${JSON.stringify(errorData)}`);
-                  }
-
-                  const addContactData = await addContactResponse.json();
-                  console.log(`Added phone ${phone.phoneNumber} to list:`, addContactData);
-                  
-                  // Add another small delay after successful addition
-                  await new Promise(resolve => setTimeout(resolve, 1000));
-                } catch (addError) {
-                  console.error(`Error adding phone ${phone.phoneNumber} to list:`, addError);
+                if (!addContactResponse.ok) {
+                  const errorData = await addContactResponse.json();
+                  throw new Error(`Failed to add contact for phone ${phone.phoneNumber}: ${JSON.stringify(errorData)}`);
                 }
+
+                await addContactResponse.json();
+                await new Promise(resolve => setTimeout(resolve, 1000));
+              } catch (addError) {
+                console.error(`Error adding phone ${phone.phoneNumber} to list:`, addError);
               }
             }
-          } else {
-            console.log(`No phones found for vanId ${details.vanId}`);
           }
         } catch (ngpError) {
           console.error(`Error fetching NGP VAN data for vanId ${details.vanId}:`, ngpError);
