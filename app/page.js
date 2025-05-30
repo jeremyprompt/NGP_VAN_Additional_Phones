@@ -160,9 +160,11 @@ export default function Home() {
                 }
                 
                 const existingLists = await checkResponse.json();
-                const listExists = existingLists.some(list => list.apiId === 'NGP_VAN_ADDITIONAL_NUMBERS');
+                const targetList = existingLists.find(list => list.apiId === 'NGP_VAN_ADDITIONAL_NUMBERS');
                 
-                if (!listExists) {
+                if (targetList) {
+                  console.log('List already exists:', targetList);
+                } else {
                   // Create the list if it doesn't exist
                   const contactListResponse = await fetch('/api/contact-lists', {
                     method: 'POST'
@@ -173,9 +175,7 @@ export default function Home() {
                   }
                   
                   const contactListData = await contactListResponse.json();
-                  console.log('Created contact list:', contactListData);
-                } else {
-                  console.log('Contact list already exists');
+                  console.log('Created new contact list:', contactListData);
                 }
               } catch (listError) {
                 console.error('Error handling contact list:', listError);
