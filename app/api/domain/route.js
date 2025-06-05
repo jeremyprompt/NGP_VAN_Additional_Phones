@@ -27,7 +27,14 @@ export async function POST(request) {
 
 export async function DELETE() {
   try {
-    cookies().delete('prompt_domain');
+    // Set the cookie with an expired date to delete it
+    cookies().set('prompt_domain', '', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 0,
+      expires: new Date(0)
+    });
     return Response.json({ success: true });
   } catch (error) {
     console.error('Error deleting domain cookie:', error);
