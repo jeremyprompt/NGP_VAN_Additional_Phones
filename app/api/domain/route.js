@@ -25,6 +25,16 @@ export async function POST(request) {
   }
 }
 
+export async function DELETE() {
+  try {
+    cookies().delete('prompt_domain');
+    return Response.json({ success: true });
+  } catch (error) {
+    console.error('Error deleting domain cookie:', error);
+    return Response.json({ error: error.message }, { status: 500 });
+  }
+}
+
 export async function GET(request) {
   try {
     const domain = cookies().get('prompt_domain')?.value;

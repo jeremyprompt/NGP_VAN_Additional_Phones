@@ -19,41 +19,56 @@ export default function Home() {
   const [domain, setDomain] = useState('');
   const [apiKey, setApiKey] = useState('');
   const [isConfigured, setIsConfigured] = useState(false);
+  const [domainSaved, setDomainSaved] = useState(false);
+  const [apiKeySaved, setApiKeySaved] = useState(false);
 
   const handleConfigSubmit = async (e) => {
     e.preventDefault();
-    if (domain.trim() && apiKey.trim()) {
-      try {
-        // Store domain
-        const domainResponse = await fetch('/api/domain', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ domain: domain.trim() })
-        });
+    setError(null);
+    
+    if (!domain.trim() || !apiKey.trim()) {
+      setError('Please enter both domain and API key');
+      return;
+    }
 
-        if (!domainResponse.ok) {
-          throw new Error('Failed to set domain');
-        }
+    try {
+      // Clear old cookies
+      await fetch('/api/domain', { method: 'DELETE' });
+      await fetch('/api/config', { method: 'DELETE' });
+      
+      // Store domain
+      const domainResponse = await fetch('/api/domain', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ domain: domain.trim() })
+      });
 
-        // Store API key
-        const apiKeyResponse = await fetch('/api/config', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ apiKey: apiKey.trim() })
-        });
-
-        if (!apiKeyResponse.ok) {
-          throw new Error('Failed to set API key');
-        }
-
-        setIsConfigured(true);
-      } catch (error) {
-        setError(error.message);
+      if (!domainResponse.ok) {
+        throw new Error('Failed to set domain');
       }
+
+      // Store API key
+      const apiKeyResponse = await fetch('/api/config', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ apiKey: apiKey.trim() })
+      });
+
+      if (!apiKeyResponse.ok) {
+        throw new Error('Failed to set API key');
+      }
+
+      // Clear any existing lists when configuration changes
+      setLists([]);
+      setSelectedList(null);
+      setIsConfigured(true);
+    } catch (error) {
+      console.error('Error setting configuration:', error);
+      setError('Failed to set configuration. Please try again.');
     }
   };
 

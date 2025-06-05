@@ -25,6 +25,16 @@ export async function POST(request) {
   }
 }
 
+export async function DELETE() {
+  try {
+    cookies().delete('prompt_api_key');
+    return Response.json({ success: true });
+  } catch (error) {
+    console.error('Error deleting API key cookie:', error);
+    return Response.json({ error: error.message }, { status: 500 });
+  }
+}
+
 export async function GET(request) {
   try {
     const apiKey = cookies().get('prompt_api_key')?.value;
