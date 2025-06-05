@@ -13,6 +13,12 @@ export async function GET(request) {
     const domain = cookieStore.get('prompt_domain')?.value;
     const apiKey = cookieStore.get('prompt_api_key')?.value;
 
+    console.log('Cookie values:', {
+      domain: domain || 'not set',
+      hasApiKey: !!apiKey,
+      cookieNames: Array.from(cookieStore.getAll().map(c => c.name))
+    });
+
     if (!domain) {
       throw new Error('Domain not set. Please set your domain first.');
     }
@@ -33,7 +39,10 @@ export async function GET(request) {
     // If no listId is provided, fetch contact lists instead of contacts
     if (!listId) {
       console.log('Fetching contact lists');
-      const response = await fetch(`https://${domain}.prompt.io/rest/1.0/contact_lists`, {
+      const listsUrl = `https://${domain}.prompt.io/rest/1.0/contact_lists`;
+      console.log('Lists URL:', listsUrl);
+      
+      const response = await fetch(listsUrl, {
         headers: {
           'accept': '*/*',
           'orgAuthToken': apiKey
@@ -45,13 +54,19 @@ export async function GET(request) {
         console.error('API Error:', {
           status: response.status,
           statusText: response.statusText,
-          error: errorText
+          error: errorText,
+          url: listsUrl,
+          headers: Object.fromEntries(response.headers.entries())
         });
-        throw new Error(`Failed to fetch contact lists: ${response.statusText}`);
+        throw new Error(`Failed to fetch contact lists: ${response.statusText} - ${errorText}`);
       }
 
       const data = await response.json();
-      console.log('Received lists data:', data);
+      console.log('Received lists data:', {
+        hasData: !!data,
+        keys: Object.keys(data),
+        contactLists: data.contactLists?.length || 0
+      });
       return Response.json({ lists: data });
     }
 
@@ -72,9 +87,10 @@ export async function GET(request) {
         status: response.status,
         statusText: response.statusText,
         error: errorText,
-        url: contactsUrl
+        url: contactsUrl,
+        headers: Object.fromEntries(response.headers.entries())
       });
-      throw new Error(`Failed to fetch contacts: ${response.statusText}`);
+      throw new Error(`Failed to fetch contacts: ${response.statusText} - ${errorText}`);
     }
 
     const data = await response.json();
@@ -101,7 +117,14 @@ export async function GET(request) {
       }
     });
   } catch (error) {
-    console.error('Error fetching data:', error);
-    return Response.json({ error: error.message }, { status: 500 });
+    console.error('Error fetching data:', {
+      message: error.message,
+      stack: error.stack,
+      type: error.constructor.name
+    });
+    return Response.json({ 
+      error: error.message,
+      details: error.stack
+    }, { status: 500 });
   }
 }
