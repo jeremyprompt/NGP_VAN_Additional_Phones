@@ -249,7 +249,7 @@ export default function Home() {
       }
 
       // Now fetch and process contacts
-      const response = await fetch(`/api/contacts${listId ? `?listId=${listId}` : ''}`);
+      const response = await fetch(`/api/contacts?listId=${listId}`);
       if (!response.ok) {
         throw new Error('Failed to fetch contacts');
       }
@@ -259,6 +259,8 @@ export default function Home() {
       // Extract customer IDs from the contacts array
       const customerIds = data.contacts?.customerContacts?.map(contact => contact.customer.id) || [];
       console.log('Customer IDs:', customerIds);
+
+      let addedContactsCount = 0;
 
       // Fetch contact details for each customer ID
       for (const customerId of customerIds) {
@@ -338,6 +340,7 @@ export default function Home() {
                     throw new Error(`Failed to add contact: ${errorData.error || 'Unknown error'}`);
                   }
 
+                  addedContactsCount++;
                   console.log('Successfully added contact to list');
                 } catch (error) {
                   console.error('Error adding contact to list:', error);
@@ -348,6 +351,13 @@ export default function Home() {
         } catch (error) {
           console.error('Error processing NGP VAN data:', error);
         }
+      }
+
+      console.log(`Added ${addedContactsCount} contacts to the list`);
+      if (addedContactsCount === 0) {
+        setError('No additional phone numbers were found to add to the list');
+      } else {
+        setError(null);
       }
     } catch (error) {
       console.error('Error in generateSecondaryPhonesList:', error);
