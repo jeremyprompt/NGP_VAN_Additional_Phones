@@ -21,12 +21,34 @@ export async function GET(request) {
     console.log('Using domain:', domain);
     console.log('Using API key:', apiKey ? 'API key present' : 'No API key');
 
-    let url = `https://${domain}.prompt.io/rest/1.0/contacts`;
-    if (listId) {
-      url = `https://${domain}.prompt.io/rest/1.0/contact_lists/${listId}/contacts`;
+    // If no listId is provided, fetch contact lists instead of contacts
+    if (!listId) {
+      console.log('Fetching contact lists');
+      const response = await fetch(`https://${domain}.prompt.io/rest/1.0/contact_lists`, {
+        headers: {
+          'accept': '*/*',
+          'orgAuthToken': apiKey
+        }
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('API Error:', {
+          status: response.status,
+          statusText: response.statusText,
+          error: errorText
+        });
+        throw new Error(`Failed to fetch contact lists: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      console.log('Received lists data:', data);
+      return Response.json({ lists: data });
     }
 
-    const response = await fetch(url, {
+    // If listId is provided, fetch contacts for that list
+    console.log(`Fetching contacts for list ${listId}`);
+    const response = await fetch(`https://${domain}.prompt.io/rest/1.0/contact_lists/${listId}/contacts`, {
       headers: {
         'accept': '*/*',
         'orgAuthToken': apiKey
@@ -44,9 +66,10 @@ export async function GET(request) {
     }
 
     const data = await response.json();
-    return Response.json(data);
+    console.log('Received contacts data:', data);
+    return Response.json({ contacts: data });
   } catch (error) {
-    console.error('Error fetching contacts:', error);
+    console.error('Error fetching data:', error);
     return Response.json({ error: error.message }, { status: 500 });
   }
 }

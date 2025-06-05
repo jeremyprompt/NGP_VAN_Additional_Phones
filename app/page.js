@@ -92,7 +92,11 @@ export default function Home() {
       }
       const data = await response.json();
       console.log('Received lists data:', data);
-      setLists(data.lists?.contactLists || []);
+      
+      // Filter for NGP_VAN lists
+      const ngpVanLists = (data.lists?.contactLists || []).filter(list => list.type === 'NGP_VAN');
+      console.log('Filtered NGP_VAN lists:', ngpVanLists);
+      setLists(ngpVanLists);
     } catch (err) {
       setError(err.message);
       console.error('Error fetching lists:', err);
