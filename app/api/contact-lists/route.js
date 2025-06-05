@@ -5,8 +5,9 @@ export const dynamic = "force-dynamic";
 export async function POST(request) {
   try {
     const { name } = await request.json();
-    const domain = cookies().get('prompt_domain')?.value;
-    const apiKey = cookies().get('prompt_api_key')?.value;
+    const cookieStore = cookies();
+    const domain = cookieStore.get('prompt_domain')?.value;
+    const apiKey = cookieStore.get('prompt_api_key')?.value;
     
     if (!name) {
       throw new Error('List name is required');
@@ -19,6 +20,9 @@ export async function POST(request) {
     if (!apiKey) {
       throw new Error('API key not set. Please set your API key first.');
     }
+
+    console.log('Using domain:', domain);
+    console.log('Using API key:', apiKey ? 'API key present' : 'No API key');
 
     const response = await fetch(`https://${domain}.prompt.io/rest/1.0/contact_lists`, {
       method: 'POST',
@@ -36,6 +40,12 @@ export async function POST(request) {
     });
 
     if (!response.ok) {
+      const errorText = await response.text();
+      console.error('API Error:', {
+        status: response.status,
+        statusText: response.statusText,
+        error: errorText
+      });
       throw new Error(`Failed to create contact list: ${response.statusText}`);
     }
 

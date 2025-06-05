@@ -1,56 +1,52 @@
-import PromptIoClient from '@/lib/promptio';
+import { cookies } from 'next/headers';
 
 export const dynamic = "force-dynamic";
 
 export async function GET(request) {
   try {
-    console.log('Environment check:', {
-      hasAuthToken: !!process.env.PROMPT_IO_AUTH_TOKEN,
-      nodeEnv: process.env.NODE_ENV,
-      baseUrl: process.env.PROMPT_IO_BASE_URL
-    });
-
-    if (!process.env.PROMPT_IO_AUTH_TOKEN) {
-      throw new Error('PROMPT_IO_AUTH_TOKEN is not configured');
-    }
-
     const { searchParams } = new URL(request.url);
     const listId = searchParams.get('listId');
-    console.log('Request URL:', request.url);
-    console.log('Search params:', Object.fromEntries(searchParams.entries()));
-    console.log('ListId from params:', listId);
+    const cookieStore = cookies();
+    const domain = cookieStore.get('prompt_domain')?.value;
+    const apiKey = cookieStore.get('prompt_api_key')?.value;
 
-    const client = PromptIoClient.getInstance();
-    console.log('Retrieved Prompt.io client instance');
-    
-    if (listId) {
-      console.log(`Fetching contacts for list ${listId}`);
-      const contacts = await client.getAllContactsFromList(listId);
-      console.log(`Retrieved ${contacts.length} contacts for list ${listId}`);
-      return Response.json({ contacts });
-    } else {
-      console.log('Fetching contact lists');
-      const lists = await client.getContactLists();
-      console.log('Retrieved lists:', lists);
-      return Response.json({ lists });
+    if (!domain) {
+      throw new Error('Domain not set. Please set your domain first.');
     }
-  } catch (error) {
-    console.error('Error in contacts API route:', {
-      message: error.message,
-      stack: error.stack,
-      type: error.constructor.name,
-      cause: error.cause
+
+    if (!apiKey) {
+      throw new Error('API key not set. Please set your API key first.');
+    }
+
+    console.log('Using domain:', domain);
+    console.log('Using API key:', apiKey ? 'API key present' : 'No API key');
+
+    let url = `https://${domain}.prompt.io/rest/1.0/contacts`;
+    if (listId) {
+      url = `https://${domain}.prompt.io/rest/1.0/contact_lists/${listId}/contacts`;
+    }
+
+    const response = await fetch(url, {
+      headers: {
+        'accept': '*/*',
+        'orgAuthToken': apiKey
+      }
     });
-    
-    // Return a more detailed error response
-    return Response.json(
-      { 
-        error: error.message || 'Failed to fetch data',
-        details: error.stack,
-        type: error.constructor.name,
-        cause: error.cause
-      },
-      { status: 500 }
-    );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('API Error:', {
+        status: response.status,
+        statusText: response.statusText,
+        error: errorText
+      });
+      throw new Error(`Failed to fetch contacts: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    return Response.json(data);
+  } catch (error) {
+    console.error('Error fetching contacts:', error);
+    return Response.json({ error: error.message }, { status: 500 });
   }
 }

@@ -1,16 +1,38 @@
+import { cookies } from 'next/headers';
+
 export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    const response = await fetch('https://jeremy.prompt.io/rest/1.0/contact_lists?first=0&max=200', {
-      method: 'GET',
+    const cookieStore = cookies();
+    const domain = cookieStore.get('prompt_domain')?.value;
+    const apiKey = cookieStore.get('prompt_api_key')?.value;
+
+    if (!domain) {
+      throw new Error('Domain not set. Please set your domain first.');
+    }
+
+    if (!apiKey) {
+      throw new Error('API key not set. Please set your API key first.');
+    }
+
+    console.log('Using domain:', domain);
+    console.log('Using API key:', apiKey ? 'API key present' : 'No API key');
+
+    const response = await fetch(`https://${domain}.prompt.io/rest/1.0/contact_lists`, {
       headers: {
         'accept': '*/*',
-        'orgAuthToken': process.env.PROMPT_IO_AUTH_TOKEN
+        'orgAuthToken': apiKey
       }
     });
 
     if (!response.ok) {
+      const errorText = await response.text();
+      console.error('API Error:', {
+        status: response.status,
+        statusText: response.statusText,
+        error: errorText
+      });
       throw new Error(`Failed to fetch contact lists: ${response.statusText}`);
     }
 
@@ -32,7 +54,7 @@ export async function GET() {
 
     return Response.json(lists);
   } catch (error) {
-    console.error('Error fetching contact lists:', error);
+    console.error('Error checking contact lists:', error);
     return Response.json({ error: error.message }, { status: 500 });
   }
 } 
