@@ -1,10 +1,12 @@
+import { cookies } from 'next/headers';
+
 export const dynamic = "force-dynamic";
 
 export async function POST(request) {
   try {
     const { name } = await request.json();
-    const domain = request.cookies.get('prompt_domain')?.value;
-    const apiKey = request.cookies.get('prompt_api_key')?.value;
+    const domain = cookies().get('prompt_domain')?.value;
+    const apiKey = cookies().get('prompt_api_key')?.value;
     
     if (!name) {
       throw new Error('List name is required');

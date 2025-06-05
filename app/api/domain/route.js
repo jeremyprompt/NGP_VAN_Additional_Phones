@@ -1,3 +1,5 @@
+import { cookies } from 'next/headers';
+
 export const dynamic = "force-dynamic";
 
 export async function POST(request) {
@@ -9,15 +11,14 @@ export async function POST(request) {
     }
 
     // Store the domain in a cookie
-    const response = Response.json({ success: true });
-    response.cookies.set('prompt_domain', domain, {
+    cookies().set('prompt_domain', domain, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
       maxAge: 60 * 60 * 24 * 7 // 1 week
     });
 
-    return response;
+    return Response.json({ success: true });
   } catch (error) {
     console.error('Error setting domain:', error);
     return Response.json({ error: error.message }, { status: 500 });
@@ -26,7 +27,7 @@ export async function POST(request) {
 
 export async function GET(request) {
   try {
-    const domain = request.cookies.get('prompt_domain')?.value;
+    const domain = cookies().get('prompt_domain')?.value;
     return Response.json({ domain });
   } catch (error) {
     console.error('Error getting domain:', error);
