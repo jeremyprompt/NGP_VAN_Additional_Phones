@@ -22,7 +22,8 @@ export async function GET() {
     const response = await fetch(`https://${domain}.prompt.io/rest/1.0/contact_lists`, {
       headers: {
         'accept': '*/*',
-        'orgAuthToken': apiKey
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json'
       }
     });
 

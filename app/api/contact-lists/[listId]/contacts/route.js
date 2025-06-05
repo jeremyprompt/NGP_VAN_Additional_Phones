@@ -50,7 +50,7 @@ export async function POST(request, { params }) {
       method: 'POST',
       headers: {
         'accept': '*/*',
-        'orgAuthToken': apiKey,
+        'Authorization': `Bearer ${apiKey}`,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(requestBody)

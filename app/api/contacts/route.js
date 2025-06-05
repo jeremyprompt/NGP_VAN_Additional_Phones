@@ -45,7 +45,8 @@ export async function GET(request) {
       const response = await fetch(listsUrl, {
         headers: {
           'accept': '*/*',
-          'orgAuthToken': apiKey
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json'
         }
       });
 
@@ -77,7 +78,8 @@ export async function GET(request) {
     const response = await fetch(contactsUrl, {
       headers: {
         'accept': '*/*',
-        'orgAuthToken': apiKey
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json'
       }
     });
 
