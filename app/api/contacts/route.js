@@ -6,6 +6,9 @@ export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
     const listId = searchParams.get('listId');
+    const first = parseInt(searchParams.get('first') || '0');
+    const max = parseInt(searchParams.get('max') || '200');
+    
     const cookieStore = cookies();
     const domain = cookieStore.get('prompt_domain')?.value;
     const apiKey = cookieStore.get('prompt_api_key')?.value;
@@ -20,6 +23,7 @@ export async function GET(request) {
 
     console.log('Using domain:', domain);
     console.log('Using API key:', apiKey ? 'API key present' : 'No API key');
+    console.log('Pagination params:', { first, max });
 
     // If no listId is provided, fetch contact lists instead of contacts
     if (!listId) {
@@ -46,14 +50,17 @@ export async function GET(request) {
       return Response.json({ lists: data });
     }
 
-    // If listId is provided, fetch contacts for that list
-    console.log(`Fetching contacts for list ${listId}`);
-    const response = await fetch(`https://${domain}.prompt.io/rest/1.0/contact_lists/${listId}/contacts`, {
-      headers: {
-        'accept': '*/*',
-        'orgAuthToken': apiKey
+    // If listId is provided, fetch contacts for that list with pagination
+    console.log(`Fetching contacts for list ${listId} (first: ${first}, max: ${max})`);
+    const response = await fetch(
+      `https://${domain}.prompt.io/rest/1.0/contact_lists/${listId}/contacts?first=${first}&max=${max}`,
+      {
+        headers: {
+          'accept': '*/*',
+          'orgAuthToken': apiKey
+        }
       }
-    });
+    );
 
     if (!response.ok) {
       const errorText = await response.text();
@@ -66,7 +73,12 @@ export async function GET(request) {
     }
 
     const data = await response.json();
-    console.log('Received contacts data:', data);
+    console.log('Received contacts data:', {
+      count: data.count,
+      received: data.customerContacts?.length || 0,
+      first,
+      max
+    });
     return Response.json({ contacts: data });
   } catch (error) {
     console.error('Error fetching data:', error);

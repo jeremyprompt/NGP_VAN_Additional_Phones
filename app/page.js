@@ -125,7 +125,36 @@ export default function Home() {
       
       // Extract the contacts array from the response
       const contacts = data.contacts?.customerContacts || [];
-      setContacts(contacts);
+      const totalCount = data.contacts?.count || 0;
+      
+      // If there are more contacts to fetch, fetch them all
+      if (totalCount > contacts.length) {
+        console.log(`Fetching all contacts (${totalCount} total)`);
+        const allContacts = [...contacts];
+        let first = contacts.length;
+        
+        while (first < totalCount) {
+          const nextUrl = `/api/contacts?listId=${listId}&first=${first}&max=200`;
+          console.log('Fetching next page:', nextUrl);
+          
+          const nextResponse = await fetch(nextUrl);
+          if (!nextResponse.ok) {
+            throw new Error('Failed to fetch next page of contacts');
+          }
+          
+          const nextData = await nextResponse.json();
+          const nextContacts = nextData.contacts?.customerContacts || [];
+          allContacts.push(...nextContacts);
+          
+          first += nextContacts.length;
+          console.log(`Fetched ${allContacts.length} of ${totalCount} contacts`);
+        }
+        
+        console.log('All contacts fetched:', allContacts.length);
+        setContacts(allContacts);
+      } else {
+        setContacts(contacts);
+      }
     } catch (error) {
       console.error('Error fetching contacts:', error);
       setError(error.message);
@@ -256,14 +285,35 @@ export default function Home() {
       const data = await response.json();
       console.log('Received contacts data:', data);
       
-      // Extract customer IDs from the contacts array
-      const customerIds = data.contacts?.customerContacts?.map(contact => contact.customer.id) || [];
-      console.log('Customer IDs:', customerIds);
+      // Get total count and initial contacts
+      const totalCount = data.contacts?.count || 0;
+      let allCustomerIds = [];
+      let first = 0;
+      
+      // Fetch all contacts in batches
+      while (first < totalCount) {
+        const batchUrl = `/api/contacts?listId=${listId}&first=${first}&max=200`;
+        console.log('Fetching contacts batch:', batchUrl);
+        
+        const batchResponse = await fetch(batchUrl);
+        if (!batchResponse.ok) {
+          throw new Error('Failed to fetch contacts batch');
+        }
+        
+        const batchData = await batchResponse.json();
+        const batchCustomerIds = batchData.contacts?.customerContacts?.map(contact => contact.customer.id) || [];
+        allCustomerIds.push(...batchCustomerIds);
+        
+        first += batchCustomerIds.length;
+        console.log(`Fetched ${allCustomerIds.length} of ${totalCount} customer IDs`);
+      }
+      
+      console.log('Total customer IDs to process:', allCustomerIds.length);
 
       let addedContactsCount = 0;
 
       // Fetch contact details for each customer ID
-      for (const customerId of customerIds) {
+      for (const customerId of allCustomerIds) {
         const detailsResponse = await fetch(`/api/customer/${customerId}`);
         if (!detailsResponse.ok) {
           console.error(`Failed to fetch details for customer ${customerId}`);
