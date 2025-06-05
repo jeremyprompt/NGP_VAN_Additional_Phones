@@ -110,8 +110,8 @@ export default function Home() {
     setError(null);
     try {
       console.log('Fetching contacts for listId:', listId);
-      const url = `/api/contacts${listId ? `?listId=${listId}` : ''}`;
-      console.log('Request URL:', url);
+      const url = `/api/contacts?listId=${listId}&first=0&max=200`;
+      console.log('Initial request URL:', url);
       
       const response = await fetch(url);
       if (!response.ok) {
@@ -121,7 +121,11 @@ export default function Home() {
       }
       
       const data = await response.json();
-      console.log('Received contacts data:', data);
+      console.log('Initial contacts response:', {
+        count: data.contacts?.count,
+        received: data.contacts?.customerContacts?.length,
+        hasContacts: !!data.contacts?.customerContacts
+      });
       
       // Extract the contacts array from the response
       const contacts = data.contacts?.customerContacts || [];
@@ -129,7 +133,7 @@ export default function Home() {
       
       // If there are more contacts to fetch, fetch them all
       if (totalCount > contacts.length) {
-        console.log(`Fetching all contacts (${totalCount} total)`);
+        console.log(`Fetching all contacts (${totalCount} total, already have ${contacts.length})`);
         const allContacts = [...contacts];
         let first = contacts.length;
         
@@ -139,20 +143,34 @@ export default function Home() {
           
           const nextResponse = await fetch(nextUrl);
           if (!nextResponse.ok) {
+            const errorData = await nextResponse.json();
+            console.error('Error fetching next page:', errorData);
             throw new Error('Failed to fetch next page of contacts');
           }
           
           const nextData = await nextResponse.json();
           const nextContacts = nextData.contacts?.customerContacts || [];
-          allContacts.push(...nextContacts);
+          console.log('Received next page:', {
+            requested: first,
+            received: nextContacts.length,
+            total: allContacts.length + nextContacts.length
+          });
           
+          allContacts.push(...nextContacts);
           first += nextContacts.length;
           console.log(`Fetched ${allContacts.length} of ${totalCount} contacts`);
         }
         
-        console.log('All contacts fetched:', allContacts.length);
+        console.log('All contacts fetched:', {
+          total: allContacts.length,
+          expected: totalCount
+        });
         setContacts(allContacts);
       } else {
+        console.log('No additional contacts to fetch:', {
+          total: contacts.length,
+          expected: totalCount
+        });
         setContacts(contacts);
       }
     } catch (error) {

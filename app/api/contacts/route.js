@@ -21,9 +21,14 @@ export async function GET(request) {
       throw new Error('API key not set. Please set your API key first.');
     }
 
-    console.log('Using domain:', domain);
-    console.log('Using API key:', apiKey ? 'API key present' : 'No API key');
-    console.log('Pagination params:', { first, max });
+    console.log('Request details:', {
+      url: request.url,
+      listId,
+      first,
+      max,
+      domain,
+      hasApiKey: !!apiKey
+    });
 
     // If no listId is provided, fetch contact lists instead of contacts
     if (!listId) {
@@ -51,23 +56,23 @@ export async function GET(request) {
     }
 
     // If listId is provided, fetch contacts for that list with pagination
-    console.log(`Fetching contacts for list ${listId} (first: ${first}, max: ${max})`);
-    const response = await fetch(
-      `https://${domain}.prompt.io/rest/1.0/contact_lists/${listId}/contacts?first=${first}&max=${max}`,
-      {
-        headers: {
-          'accept': '*/*',
-          'orgAuthToken': apiKey
-        }
+    const contactsUrl = `https://${domain}.prompt.io/rest/1.0/contact_lists/${listId}/contacts?first=${first}&max=${max}`;
+    console.log('Fetching contacts from URL:', contactsUrl);
+    
+    const response = await fetch(contactsUrl, {
+      headers: {
+        'accept': '*/*',
+        'orgAuthToken': apiKey
       }
-    );
+    });
 
     if (!response.ok) {
       const errorText = await response.text();
       console.error('API Error:', {
         status: response.status,
         statusText: response.statusText,
-        error: errorText
+        error: errorText,
+        url: contactsUrl
       });
       throw new Error(`Failed to fetch contacts: ${response.statusText}`);
     }
@@ -77,7 +82,9 @@ export async function GET(request) {
       count: data.count,
       received: data.customerContacts?.length || 0,
       first,
-      max
+      max,
+      hasContacts: !!data.customerContacts,
+      contactKeys: data.customerContacts ? Object.keys(data.customerContacts[0] || {}) : []
     });
     return Response.json({ contacts: data });
   } catch (error) {
