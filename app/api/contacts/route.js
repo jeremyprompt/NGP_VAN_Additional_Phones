@@ -84,7 +84,8 @@ export async function GET(request) {
       first,
       max,
       hasContacts: !!data.customerContacts,
-      contactKeys: data.customerContacts ? Object.keys(data.customerContacts[0] || {}) : []
+      contactKeys: data.customerContacts ? Object.keys(data.customerContacts[0] || {}) : [],
+      url: contactsUrl
     });
     return Response.json({ contacts: data });
   } catch (error) {

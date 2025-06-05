@@ -136,8 +136,10 @@ export default function Home() {
         console.log(`Fetching all contacts (${totalCount} total, already have ${contacts.length})`);
         const allContacts = [...contacts];
         let first = contacts.length;
+        let emptyResponses = 0;
+        const MAX_EMPTY_RESPONSES = 3;
         
-        while (first < totalCount) {
+        while (first < totalCount && emptyResponses < MAX_EMPTY_RESPONSES) {
           const nextUrl = `/api/contacts?listId=${listId}&first=${first}&max=200`;
           console.log('Fetching next page:', nextUrl);
           
@@ -156,9 +158,22 @@ export default function Home() {
             total: allContacts.length + nextContacts.length
           });
           
-          allContacts.push(...nextContacts);
-          first += nextContacts.length;
+          if (nextContacts.length === 0) {
+            emptyResponses++;
+            console.log(`Received empty response (${emptyResponses}/${MAX_EMPTY_RESPONSES})`);
+            // Still increment first to try the next page
+            first += 200;
+          } else {
+            emptyResponses = 0; // Reset counter on successful response
+            allContacts.push(...nextContacts);
+            first += nextContacts.length;
+          }
+          
           console.log(`Fetched ${allContacts.length} of ${totalCount} contacts`);
+        }
+        
+        if (emptyResponses >= MAX_EMPTY_RESPONSES) {
+          console.warn('Stopping pagination due to multiple empty responses');
         }
         
         console.log('All contacts fetched:', {
