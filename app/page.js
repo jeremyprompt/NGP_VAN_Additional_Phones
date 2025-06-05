@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import ContactDisplay from '@/components/ContactDisplay';
 import ngpvan from '@/lib/ngpvan';
 
 // Add NGP VAN credentials
@@ -249,130 +248,86 @@ export default function Home() {
 
                   if (!addContactResponse.ok) {
                     const errorData = await addContactResponse.json();
-                    throw new Error(`Failed to add contact for phone ${phone.phoneNumber}: ${JSON.stringify(errorData)}`);
+                    console.error('Error adding contact:', errorData);
+                    throw new Error(`Failed to add contact: ${errorData.error || 'Unknown error'}`);
                   }
 
-                  const addContactData = await addContactResponse.json();
-                  console.log(`Added phone ${phone.phoneNumber} to list:`, addContactData);
-                  
-                  // Add another small delay after successful addition
-                  await new Promise(resolve => setTimeout(resolve, 1000));
-                } catch (addError) {
-                  console.error(`Error adding phone ${phone.phoneNumber} to list:`, addError);
+                  console.log('Successfully added contact to list');
+                } catch (error) {
+                  console.error('Error adding contact to list:', error);
                 }
               }
             }
-          } else {
-            console.log(`No phones found for vanId ${details.vanId}`);
           }
-        } catch (ngpError) {
-          console.error(`Error fetching NGP VAN data for vanId ${details.vanId}:`, ngpError);
+        } catch (error) {
+          console.error('Error processing NGP VAN data:', error);
         }
       }
     } catch (error) {
-      console.error('Error generating secondary phones list:', error);
+      console.error('Error in generateSecondaryPhonesList:', error);
+      setError(error.message);
     }
   };
 
   return (
     <main className="min-h-screen p-8">
-      <div className="max-w-6xl mx-auto">
-        <h1 className="text-3xl font-bold mb-8 text-white">NGP VAN Contact Lists</h1>
+      <div className="max-w-4xl mx-auto">
+        <h1 className="text-3xl font-bold mb-8">NGP VAN Additional Phones</h1>
         
-        <button
-          onClick={fetchLists}
-          disabled={loading}
-          className="mb-8 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-blue-300"
-        >
-          {loading ? 'Loading...' : 'Load Contact Lists'}
-        </button>
-
-        {error && (
-          <div className="mb-4 p-4 bg-red-100 text-red-700 rounded">
-            {error}
+        <div className="space-y-6">
+          <div>
+            <button
+              onClick={fetchLists}
+              className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+              disabled={loading}
+            >
+              {loading ? 'Loading...' : 'Fetch Lists'}
+            </button>
           </div>
-        )}
 
-        {lists.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {lists.map((list) => (
-              <div key={list.id} className="p-6 border rounded-lg shadow-md bg-white hover:shadow-lg transition-shadow duration-200">
-                <h2 className="text-xl font-semibold mb-2 text-black">{list.name}</h2>
-                <div className="text-sm text-gray-600 space-y-2">
-                  <p>Type: {list.type}</p>
+          {lists.length > 0 && (
+            <div>
+              <h2 className="text-xl font-semibold mb-4">Select a List</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {lists.map((list) => (
                   <button
-                    onClick={() => fetchContacts(list.id)}
-                    disabled={loading}
-                    className="mt-4 w-full px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:bg-green-300"
+                    key={list.id}
+                    onClick={() => {
+                      setSelectedList(list);
+                      fetchContacts(list.id);
+                    }}
+                    className={`p-4 border rounded-lg ${
+                      selectedList?.id === list.id
+                        ? 'border-blue-500 bg-blue-50'
+                        : 'border-gray-200 hover:border-blue-300'
+                    }`}
                   >
-                    {loading && selectedList === list.id ? 'Loading Contacts...' : 'Display Contacts'}
+                    <h3 className="font-medium">{list.name}</h3>
+                    <p className="text-sm text-gray-500">{list.type}</p>
                   </button>
-                  <button
-                    onClick={() => generateSecondaryPhonesList(list.id)}
-                    disabled={loading}
-                    className="mt-2 w-full px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 disabled:bg-purple-300"
-                  >
-                    Generate Secondary Phones List
-                  </button>
-                </div>
+                ))}
               </div>
-            ))}
-          </div>
-        ) : !loading && !error && (
-          <p className="text-gray-500">Click the button above to load contact lists</p>
-        )}
-
-        {contacts.length > 0 && (
-          <div className="mt-8">
-            <h2 className="text-2xl font-bold mb-4 text-black">Contacts in Selected List</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {contacts.map((contact) => {
-                const customerId = contact.customer.id;
-                const details = customerDetails[customerId];
-                return (
-                  <div key={customerId} className="p-6 border rounded-lg shadow-md bg-white hover:shadow-lg transition-shadow duration-200">
-                    <h3 className="text-lg font-semibold mb-2 text-black">
-                      {contact.customer.displayName}
-                    </h3>
-                    <div className="text-sm text-gray-600 space-y-2">
-                      <p>Created: {new Date(contact.customer.createdDate).toLocaleDateString()}</p>
-                      {contact.customer.channels.map((channel, index) => (
-                        <p key={index}>Phone: {channel.key}</p>
-                      ))}
-                      <button
-                        onClick={() => fetchContactDetails(customerId)}
-                        className="mt-2 px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700"
-                      >
-                        Get Customer Details
-                      </button>
-                      {details && (
-                        <div className="mt-4 p-4 bg-gray-50 rounded">
-                          <h4 className="font-semibold mb-2 text-black">Customer Details:</h4>
-                          <pre className="text-xs overflow-auto whitespace-pre-wrap">
-                            {JSON.stringify(details, null, 2)}
-                          </pre>
-                        </div>
-                      )}
-                      {ngpVanDetails[customerId] && (
-                        <div className="mt-4 p-4 bg-blue-50 rounded">
-                          <h4 className="font-semibold mb-2 text-black">NGP VAN Phone Numbers:</h4>
-                          {ngpVanDetails[customerId].phones?.map((phone, index) => (
-                            <div key={index} className="mb-2 p-2 bg-white rounded shadow-sm">
-                              <p className="font-medium">{phone.phoneNumber}</p>
-                              <p className="text-xs text-gray-500">
-                                Type: {phone.phoneType} | Status: {phone.status}
-                              </p>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
             </div>
-          </div>
-        )}
+          )}
+
+          {selectedList && (
+            <div>
+              <button
+                onClick={() => generateSecondaryPhonesList(selectedList.id)}
+                className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
+                disabled={loading}
+              >
+                {loading ? 'Processing...' : 'Generate Secondary Phones List'}
+              </button>
+            </div>
+          )}
+
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+              {error}
+            </div>
+          )}
+        </div>
       </div>
     </main>
   );
