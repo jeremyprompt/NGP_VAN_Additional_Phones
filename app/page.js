@@ -124,7 +124,7 @@ export default function Home() {
       console.log('Received contacts data:', data);
       
       // Extract the contacts array from the response
-      const contacts = data.contacts || [];
+      const contacts = data.contacts?.customerContacts || [];
       setContacts(contacts);
     } catch (error) {
       console.error('Error fetching contacts:', error);
@@ -254,7 +254,10 @@ export default function Home() {
         throw new Error('Failed to fetch contacts');
       }
       const data = await response.json();
-      const customerIds = data.contacts.map(contact => contact.customer.id);
+      console.log('Received contacts data:', data);
+      
+      // Extract customer IDs from the contacts array
+      const customerIds = data.contacts?.customerContacts?.map(contact => contact.customer.id) || [];
       console.log('Customer IDs:', customerIds);
 
       // Fetch contact details for each customer ID
