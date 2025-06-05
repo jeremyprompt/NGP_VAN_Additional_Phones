@@ -1,7 +1,13 @@
 export const dynamic = "force-dynamic";
 
-export async function POST() {
+export async function POST(request) {
   try {
+    const { name } = await request.json();
+    
+    if (!name) {
+      throw new Error('List name is required');
+    }
+
     const response = await fetch('https://jeremy.prompt.io/rest/1.0/contact_lists', {
       method: 'POST',
       headers: {
@@ -10,8 +16,8 @@ export async function POST() {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        name: "NGP_VAN_ADDITIONAL_NUMBERS",
-        apiId: "NGP_VAN_ADDITIONAL_NUMBERS",
+        name: name,
+        apiId: name.replace(/\s+/g, '_'),
         icon: "",
         description: "Additional numbers found in NGP VAN"
       })
