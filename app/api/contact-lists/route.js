@@ -4,6 +4,7 @@ export async function POST(request) {
   try {
     const { name } = await request.json();
     const domain = request.cookies.get('prompt_domain')?.value;
+    const apiKey = request.cookies.get('prompt_api_key')?.value;
     
     if (!name) {
       throw new Error('List name is required');
@@ -13,11 +14,15 @@ export async function POST(request) {
       throw new Error('Domain not set. Please set your domain first.');
     }
 
+    if (!apiKey) {
+      throw new Error('API key not set. Please set your API key first.');
+    }
+
     const response = await fetch(`https://${domain}.prompt.io/rest/1.0/contact_lists`, {
       method: 'POST',
       headers: {
         'accept': '*/*',
-        'orgAuthToken': process.env.PROMPT_IO_AUTH_TOKEN,
+        'orgAuthToken': apiKey,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({

@@ -17,18 +17,50 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [domain, setDomain] = useState('');
-  const [isDomainLocked, setIsDomainLocked] = useState(false);
+  const [apiKey, setApiKey] = useState('');
+  const [isConfigured, setIsConfigured] = useState(false);
 
-  const handleDomainSubmit = (e) => {
+  const handleConfigSubmit = async (e) => {
     e.preventDefault();
-    if (domain.trim()) {
-      setIsDomainLocked(true);
+    if (domain.trim() && apiKey.trim()) {
+      try {
+        // Store domain
+        const domainResponse = await fetch('/api/domain', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ domain: domain.trim() })
+        });
+
+        if (!domainResponse.ok) {
+          throw new Error('Failed to set domain');
+        }
+
+        // Store API key
+        const apiKeyResponse = await fetch('/api/config', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ apiKey: apiKey.trim() })
+        });
+
+        if (!apiKeyResponse.ok) {
+          throw new Error('Failed to set API key');
+        }
+
+        setIsConfigured(true);
+      } catch (error) {
+        setError(error.message);
+      }
     }
   };
 
-  const resetDomain = () => {
+  const resetConfig = () => {
     setDomain('');
-    setIsDomainLocked(false);
+    setApiKey('');
+    setIsConfigured(false);
     setLists([]);
     setSelectedList(null);
     setSelectedListName('');
@@ -307,8 +339,8 @@ export default function Home() {
         <h1 className="text-3xl font-bold mb-8">NGP VAN Additional Phones</h1>
         
         <div className="space-y-6">
-          {!isDomainLocked ? (
-            <form onSubmit={handleDomainSubmit} className="space-y-4">
+          {!isConfigured ? (
+            <form onSubmit={handleConfigSubmit} className="space-y-4">
               <div>
                 <label htmlFor="domain" className="block text-sm font-medium text-gray-700 mb-1">
                   Enter your Prompt.io domain
@@ -323,31 +355,54 @@ export default function Home() {
                     className="flex-1 px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
                     required
                   />
+                </div>
+              </div>
+
+              <div>
+                <label htmlFor="apiKey" className="block text-sm font-medium text-gray-700 mb-1">
+                  Enter your Prompt.io API Key
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="password"
+                    id="apiKey"
+                    value={apiKey}
+                    onChange={(e) => setApiKey(e.target.value)}
+                    placeholder="your-api-key"
+                    className="flex-1 px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                    required
+                  />
                   <button
                     type="submit"
                     className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
                   >
-                    Set Domain
+                    Save Configuration
                   </button>
                 </div>
               </div>
             </form>
           ) : (
             <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-              <div>
-                <span className="text-sm text-gray-500">Current domain:</span>
-                <span className="ml-2 font-medium">{domain}.prompt.io</span>
+              <div className="space-y-1">
+                <div>
+                  <span className="text-sm text-gray-500">Current domain:</span>
+                  <span className="ml-2 font-medium">{domain}.prompt.io</span>
+                </div>
+                <div>
+                  <span className="text-sm text-gray-500">API Key:</span>
+                  <span className="ml-2 font-medium">••••••••{apiKey.slice(-4)}</span>
+                </div>
               </div>
               <button
-                onClick={resetDomain}
+                onClick={resetConfig}
                 className="text-sm text-red-600 hover:text-red-700"
               >
-                Change Domain
+                Change Configuration
               </button>
             </div>
           )}
 
-          {isDomainLocked && (
+          {isConfigured && (
             <>
               <div>
                 <button
