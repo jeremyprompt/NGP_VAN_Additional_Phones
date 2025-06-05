@@ -3,12 +3,17 @@ export const dynamic = "force-dynamic";
 export async function POST(request) {
   try {
     const { name } = await request.json();
+    const domain = request.cookies.get('prompt_domain')?.value;
     
     if (!name) {
       throw new Error('List name is required');
     }
 
-    const response = await fetch('https://jeremy.prompt.io/rest/1.0/contact_lists', {
+    if (!domain) {
+      throw new Error('Domain not set. Please set your domain first.');
+    }
+
+    const response = await fetch(`https://${domain}.prompt.io/rest/1.0/contact_lists`, {
       method: 'POST',
       headers: {
         'accept': '*/*',

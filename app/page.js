@@ -16,6 +16,24 @@ export default function Home() {
   const [ngpVanDetails, setNgpVanDetails] = useState({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [domain, setDomain] = useState('');
+  const [isDomainLocked, setIsDomainLocked] = useState(false);
+
+  const handleDomainSubmit = (e) => {
+    e.preventDefault();
+    if (domain.trim()) {
+      setIsDomainLocked(true);
+    }
+  };
+
+  const resetDomain = () => {
+    setDomain('');
+    setIsDomainLocked(false);
+    setLists([]);
+    setSelectedList(null);
+    setSelectedListName('');
+    setContacts([]);
+  };
 
   const fetchLists = async () => {
     setLoading(true);
@@ -289,52 +307,96 @@ export default function Home() {
         <h1 className="text-3xl font-bold mb-8">NGP VAN Additional Phones</h1>
         
         <div className="space-y-6">
-          <div>
-            <button
-              onClick={fetchLists}
-              className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-              disabled={loading}
-            >
-              {loading ? 'Loading...' : 'Fetch Lists'}
-            </button>
-          </div>
-
-          {lists.length > 0 && (
-            <div>
-              <h2 className="text-xl font-semibold mb-4">Select a List</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {lists.map((list) => (
+          {!isDomainLocked ? (
+            <form onSubmit={handleDomainSubmit} className="space-y-4">
+              <div>
+                <label htmlFor="domain" className="block text-sm font-medium text-gray-700 mb-1">
+                  Enter your Prompt.io domain
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    id="domain"
+                    value={domain}
+                    onChange={(e) => setDomain(e.target.value)}
+                    placeholder="your-domain"
+                    className="flex-1 px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                    required
+                  />
                   <button
-                    key={list.id}
-                    onClick={() => {
-                      setSelectedList(list);
-                      setSelectedListName(list.name);
-                      fetchContacts(list.id);
-                    }}
-                    className={`p-4 border rounded-lg ${
-                      selectedList?.id === list.id
-                        ? 'border-blue-500 bg-blue-50'
-                        : 'border-gray-200 hover:border-blue-300'
-                    }`}
+                    type="submit"
+                    className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
                   >
-                    <h3 className="font-medium">{list.name}</h3>
-                    <p className="text-sm text-gray-500">{list.type}</p>
+                    Set Domain
                   </button>
-                ))}
+                </div>
               </div>
+            </form>
+          ) : (
+            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+              <div>
+                <span className="text-sm text-gray-500">Current domain:</span>
+                <span className="ml-2 font-medium">{domain}.prompt.io</span>
+              </div>
+              <button
+                onClick={resetDomain}
+                className="text-sm text-red-600 hover:text-red-700"
+              >
+                Change Domain
+              </button>
             </div>
           )}
 
-          {selectedList && (
-            <div>
-              <button
-                onClick={() => generateSecondaryPhonesList(selectedList.id)}
-                className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
-                disabled={loading}
-              >
-                {loading ? 'Processing...' : 'Generate Secondary Phones List'}
-              </button>
-            </div>
+          {isDomainLocked && (
+            <>
+              <div>
+                <button
+                  onClick={fetchLists}
+                  className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+                  disabled={loading}
+                >
+                  {loading ? 'Loading...' : 'Fetch Lists'}
+                </button>
+              </div>
+
+              {lists.length > 0 && (
+                <div>
+                  <h2 className="text-xl font-semibold mb-4">Select a List</h2>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {lists.map((list) => (
+                      <button
+                        key={list.id}
+                        onClick={() => {
+                          setSelectedList(list);
+                          setSelectedListName(list.name);
+                          fetchContacts(list.id);
+                        }}
+                        className={`p-4 border rounded-lg ${
+                          selectedList?.id === list.id
+                            ? 'border-blue-500 bg-blue-50'
+                            : 'border-gray-200 hover:border-blue-300'
+                        }`}
+                      >
+                        <h3 className="font-medium">{list.name}</h3>
+                        <p className="text-sm text-gray-500">{list.type}</p>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {selectedList && (
+                <div>
+                  <button
+                    onClick={() => generateSecondaryPhonesList(selectedList.id)}
+                    className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
+                    disabled={loading}
+                  >
+                    {loading ? 'Processing...' : 'Generate Secondary Phones List'}
+                  </button>
+                </div>
+              )}
+            </>
           )}
 
           {error && (
