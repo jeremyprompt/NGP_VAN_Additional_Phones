@@ -10,6 +10,7 @@ const NGP_VAN_PASSWORD = process.env.NGP_VAN_PASSWORD;
 export default function Home() {
   const [lists, setLists] = useState([]);
   const [selectedList, setSelectedList] = useState(null);
+  const [selectedListName, setSelectedListName] = useState('');
   const [contacts, setContacts] = useState([]);
   const [customerDetails, setCustomerDetails] = useState({});
   const [ngpVanDetails, setNgpVanDetails] = useState({});
@@ -120,6 +121,13 @@ export default function Home() {
 
   const generateSecondaryPhonesList = async (listId) => {
     try {
+      if (!selectedListName) {
+        throw new Error('No list name selected');
+      }
+
+      const extrasListName = `${selectedListName}_EXTRAS`;
+      console.log('Looking for or creating list:', extrasListName);
+
       // First, check if the contact list exists
       const checkResponse = await fetch('/api/contact-lists/check');
       if (!checkResponse.ok) {
@@ -142,9 +150,9 @@ export default function Home() {
       const targetListIndex = existingLists.findIndex(list => {
         console.log('Checking list:', {
           name: list.name,
-          matches: list.name === 'NGP_VAN_ADDITIONAL_NUMBERS'
+          matches: list.name === extrasListName
         });
-        return list.name === 'NGP_VAN_ADDITIONAL_NUMBERS';
+        return list.name === extrasListName;
       });
       
       if (targetListIndex !== -1) {
@@ -153,7 +161,13 @@ export default function Home() {
       } else {
         // Create the list if it doesn't exist
         const contactListResponse = await fetch('/api/contact-lists', {
-          method: 'POST'
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            name: extrasListName
+          })
         });
         
         if (!contactListResponse.ok) {
@@ -294,6 +308,7 @@ export default function Home() {
                     key={list.id}
                     onClick={() => {
                       setSelectedList(list);
+                      setSelectedListName(list.name);
                       fetchContacts(list.id);
                     }}
                     className={`p-4 border rounded-lg ${
