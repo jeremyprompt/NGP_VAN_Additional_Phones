@@ -121,15 +121,17 @@ export default function Home() {
       }
       
       const data = await response.json();
-      console.log('Initial contacts response:', {
-        count: data.contacts?.count,
-        received: data.contacts?.customerContacts?.length,
-        hasContacts: !!data.contacts?.customerContacts
-      });
+      console.log('Initial contacts response:', data);
       
       // Extract the contacts array from the response
       const contacts = data.contacts?.customerContacts || [];
       const totalCount = data.contacts?.count || 0;
+      
+      console.log('Processed initial response:', {
+        totalCount,
+        initialContacts: contacts.length,
+        hasContacts: contacts.length > 0
+      });
       
       // If there are more contacts to fetch, fetch them all
       if (totalCount > contacts.length) {
@@ -155,7 +157,8 @@ export default function Home() {
           console.log('Received next page:', {
             requested: first,
             received: nextContacts.length,
-            total: allContacts.length + nextContacts.length
+            total: allContacts.length + nextContacts.length,
+            response: nextData
           });
           
           if (nextContacts.length === 0) {

@@ -78,16 +78,28 @@ export async function GET(request) {
     }
 
     const data = await response.json();
-    console.log('Received contacts data:', {
-      count: data.count,
-      received: data.customerContacts?.length || 0,
+    console.log('Raw API Response:', JSON.stringify(data, null, 2));
+    
+    // Check if the response structure is different
+    const contacts = data.customerContacts || data.contacts || [];
+    const count = data.count || data.totalCount || 0;
+    
+    console.log('Processed contacts data:', {
+      count,
+      received: contacts.length,
+      hasContacts: contacts.length > 0,
       first,
       max,
-      hasContacts: !!data.customerContacts,
-      contactKeys: data.customerContacts ? Object.keys(data.customerContacts[0] || {}) : [],
-      url: contactsUrl
+      url: contactsUrl,
+      responseKeys: Object.keys(data)
     });
-    return Response.json({ contacts: data });
+
+    return Response.json({ 
+      contacts: {
+        count,
+        customerContacts: contacts
+      }
+    });
   } catch (error) {
     console.error('Error fetching data:', error);
     return Response.json({ error: error.message }, { status: 500 });
