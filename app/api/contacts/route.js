@@ -6,7 +6,8 @@ export async function GET(request) {
   try {
     console.log('Environment check:', {
       hasAuthToken: !!process.env.PROMPT_IO_AUTH_TOKEN,
-      nodeEnv: process.env.NODE_ENV
+      nodeEnv: process.env.NODE_ENV,
+      baseUrl: process.env.PROMPT_IO_BASE_URL
     });
 
     if (!process.env.PROMPT_IO_AUTH_TOKEN) {
@@ -30,19 +31,24 @@ export async function GET(request) {
     } else {
       console.log('Fetching contact lists');
       const lists = await client.getContactLists();
+      console.log('Retrieved lists:', lists);
       return Response.json({ lists });
     }
   } catch (error) {
     console.error('Error in contacts API route:', {
       message: error.message,
       stack: error.stack,
-      type: error.constructor.name
+      type: error.constructor.name,
+      cause: error.cause
     });
     
+    // Return a more detailed error response
     return Response.json(
       { 
         error: error.message || 'Failed to fetch data',
-        details: error.stack
+        details: error.stack,
+        type: error.constructor.name,
+        cause: error.cause
       },
       { status: 500 }
     );
